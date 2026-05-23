@@ -614,6 +614,7 @@ function processCricketProcedures(whatToProcess)
 	case 'READ-MATCH-AND-POPULATE':
 		valueToProcess = $('#matchFileTimeStamp').val();
 		break;
+		
 	}
 
 	$.ajax({    
