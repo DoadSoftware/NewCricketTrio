@@ -28,6 +28,17 @@
              <h3 class="mb-0">Initialise</h3>
            </div>
           <div class="card-body">
+          <div class="form-group row row-bottom-margin ml-2" style="margin-bottom:0.8px;">
+			    <label for="Category" class="col-sm-4 col-form-label text-left">Select Category </label>
+			    <div class="col-sm-6 col-md-6">
+			      <select id="Category" name="Category" class="browser-default custom-select custom-select-sm"
+			      		onchange="processCricketProcedures('GET-CATEGORY-DATA')">
+			      		<option value=" "> </option>
+			      		<option value="MEN">MEN</option>
+			      		<option value="WOMEN">WOMEN</option>
+			      </select>
+			    </div>
+			  </div>
 			  <div class="form-group row row-bottom-margin ml-2" style="margin-bottom:5px;">
 			    <label for="selectedMatch" class="col-sm-4 col-form-label text-left">Select Match </label>
 			    <div class="col-sm-6 col-md-6">

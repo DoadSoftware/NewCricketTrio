@@ -36,6 +36,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import com.cricket.broadcaster.DOAD_TRIO;
+import com.cricket.config.DatabaseContextHolder;
 import com.cricket.containers.Excel;
 import com.cricket.service.CricketService;
 import com.cricket.model.*;
@@ -57,6 +58,8 @@ public class IndexController
 	public static long last_match_time_stamp = 0;
 	public static DOAD_TRIO this_DOAD_TRIO;
 	public static Excel this_Excel = new Excel();
+	public static String basePath = "";
+	public static MatchStats MatchStats;
 	public static MatchAllData session_match = new MatchAllData();
 	//public static EventFile session_event = new EventFile();
 	public static HeadToHead headToHead = new HeadToHead ();
@@ -128,7 +131,7 @@ public class IndexController
 		}
 		
 		model.addAttribute("session_Configurations",session_Configurations);
-		
+		DatabaseContextHolder.setDb("LOCAL");
 		return "initialise";
 	
 	}
@@ -140,7 +143,8 @@ public class IndexController
 			@RequestParam(value = "selectedMatch", required = false, defaultValue = "") String selectmatch,
 			@RequestParam(value = "selectedCricketDirectory", required = false, defaultValue = "") String selectedCricketDirectory,
 			@RequestParam(value = "vizIPAddress", required = false, defaultValue = "") String vizIPAddress,
-			@RequestParam(value = "vizPortNumber", required = false, defaultValue = "") String vizPortNumber) 
+			@RequestParam(value = "vizPortNumber", required = false, defaultValue = "") String vizPortNumber,
+			@RequestParam(value = "Category", required = false, defaultValue = "") String Category) 
 					throws UnknownHostException, IOException, JAXBException, IllegalAccessException, InvocationTargetException, ParseException, URISyntaxException, InvalidFormatException 
 	{
 		if(current_date == null || current_date.isEmpty()) {
@@ -158,8 +162,19 @@ public class IndexController
 			session_Configurations.setBroadcaster(selectedBroadcaster);
 			session_Configurations.setPrimaryIpAddress(vizIPAddress);
 			session_Configurations.setCricketDirectory(selectedCricketDirectory);
+			session_Configurations.setCategory(Category);
 
-			mainCricketDir = CricketUtil.CRICKET_DIRECTORY;
+			basePath = CricketUtil.CRICKET_DIRECTORY;
+		    
+		    if (Category.equalsIgnoreCase("men")) {
+		    	basePath = "C:\\Sports\\CricketMen\\";
+		    	DatabaseContextHolder.setDb("MEN");
+		    } else if (Category.equalsIgnoreCase("women")) {
+		    	basePath = "C:\\Sports\\CricketWomen\\";
+		    	DatabaseContextHolder.setDb("WOMEN");
+		    }
+		    
+			mainCricketDir = basePath;
 			if(session_Configurations.getCricketDirectory().equalsIgnoreCase(CricketUtil.SECONDARY)) {
 				mainCricketDir = CricketUtil.CRICKET2_DIRECTORY;
 			}
@@ -173,11 +188,12 @@ public class IndexController
 			}
 			
 			//session_selected_broadcaster = selectedBroadcaster;
-			
 			session_match = new MatchAllData();
 			session_players = cricketService.getAllPlayer();
 			session_teams = cricketService.getTeams();
 			session_grounds = cricketService.getGrounds();
+			
+			
 			
 			if(new File(mainCricketDir + CricketUtil.SETUP_DIRECTORY + selectmatch).exists()) {
 				session_match.setSetup(new ObjectMapper().readValue(new File(mainCricketDir + CricketUtil.SETUP_DIRECTORY + 
@@ -196,7 +212,7 @@ public class IndexController
 			session_match.getMatch().setMatchFileName(selectmatch);
 			
 			session_match = CricketFunctions.populateMatchVariables(CricketFunctions.readOrSaveMatchFile(CricketUtil.READ,
-				CricketUtil.SETUP + "," + CricketUtil.MATCH + "," + CricketUtil.EVENT, session_match,session_Configurations),
+				CricketUtil.SETUP + "," + CricketUtil.MATCH + "," + CricketUtil.EVENT, session_match,session_Configurations,basePath),
 				session_players, session_teams, session_grounds);
 			
 			session_match.getSetup().setMatchFileTimeStamp(new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(new Date()));
@@ -207,10 +223,11 @@ public class IndexController
 			getDataFromExcelFile(mainCricketDir);
 			allStatsType = cricketService.getAllStatsType();
 			allStatistics = cricketService.getAllStats();
-			headToHead = CricketFunctions.extractHeadToHead(session_match, cricketService);
+			headToHead = CricketFunctions.extractHeadToHead(session_match, cricketService,basePath);
 			past_tape = CricketFunctions.extractTapeData("PAST_MATCHES_DATA", cricketService, session_match, null, headToHead.getH2hPlayer());
 			pastTournament = CricketFunctions.extractTournamentData("PAST_MATCHES_DATA", false,headToHead.getH2hPlayer(), 
 					cricketService, session_match, null);
+			MatchStats = CricketFunctions.getAllEvents(session_match,session_Configurations.getBroadcaster(), session_match.getEventFile().getEvents());
 		//	past_tournament_stats = CricketFunctions.extractTournamentData("PAST_MATCHES_DATA", false, headToHead.getH2hPlayer(), cricketService, session_match, null);
 			model.addAttribute("session_match", session_match);
 			model.addAttribute("session_selected_broadcaster", selectedBroadcaster);
@@ -230,6 +247,32 @@ public class IndexController
 	{
 		//System.out.println("session_selected_broadcaster = " + session_selected_broadcaster);
 		switch (whatToProcess.toUpperCase()) {
+		case "GET-CATEGORY-DATA":
+		    String category = valueToProcess.trim().toLowerCase(); // "men" or "women"
+
+		    File matchDir;
+		    if (category.equalsIgnoreCase("men")) {
+		        matchDir = new File("C:\\Sports\\CricketMen\\Matches\\");
+		        DatabaseContextHolder.setDb("MEN");
+		    } else if (category.equalsIgnoreCase("women")) {
+		        matchDir = new File("C:\\Sports\\CricketWomen\\Matches\\");
+		        DatabaseContextHolder.setDb("WOMEN");
+		    } else {
+		        matchDir = new File(CricketUtil.CRICKET_SERVER_DIRECTORY + CricketUtil.MATCHES_DIRECTORY);
+		    }
+
+		    File[] files = matchDir.listFiles(f -> f.isFile() && f.getName().toLowerCase().endsWith(".json"));
+		    List<String> matchNames = new ArrayList<>();
+		    if (files != null) {
+		        for (File f : files) {
+		            matchNames.add(f.getName());
+		        }
+		    }
+
+		    Map<String, Object> response = new HashMap<>();
+		    response.put("configuration", session_Configurations);
+		    response.put("matchFiles", matchNames);
+		    return objectMapper.writeValueAsString(response);
 		case "GRAPHIC_OPTIONS":
 			Map<String,String> map = getDataFromExcelFile(mainCricketDir);
 			return objectMapper.writeValueAsString(map.keySet());
@@ -250,9 +293,9 @@ public class IndexController
 			return objectMapper.writeValueAsString(tapeball).toString();
 		case "RE_READ_DATA":
 			session_match = CricketFunctions.populateMatchVariables(CricketFunctions.readOrSaveMatchFile(CricketUtil.READ,
-				CricketUtil.SETUP + "," + CricketUtil.MATCH + "," + CricketUtil.EVENT, session_match,session_Configurations),
+				CricketUtil.SETUP + "," + CricketUtil.MATCH + "," + CricketUtil.EVENT, session_match,session_Configurations,basePath),
 					session_players, session_teams, session_grounds);
-			headToHead = CricketFunctions.extractHeadToHead(session_match, cricketService);
+			headToHead = CricketFunctions.extractHeadToHead(session_match, cricketService,"");
 			pastTournament = CricketFunctions.extractTournamentData("PAST_MATCHES_DATA", false, headToHead.getH2hPlayer(), cricketService, session_match, null);
 			//matchstats = CricketFunctions.getAllEvents(session_match ,session_selected_broadcaster, session_match.getEventFile().getEvents());
 			past_tape = CricketFunctions.extractTapeData("PAST_MATCHES_DATA", cricketService, session_match, null, headToHead.getH2hPlayer());
@@ -268,10 +311,11 @@ public class IndexController
 			if(last_match_time_stamp != new File(mainCricketDir + CricketUtil.MATCHES_DIRECTORY 
 				+ session_match.getMatch().getMatchFileName()).lastModified()) {
 				session_match = CricketFunctions.populateMatchVariables(CricketFunctions.readOrSaveMatchFile(CricketUtil.READ,
-					CricketUtil.MATCH + "," + CricketUtil.EVENT, session_match,session_Configurations),
+					CricketUtil.MATCH + "," + CricketUtil.EVENT, session_match,session_Configurations,basePath),
 					session_players, session_teams, session_grounds);
 				last_match_time_stamp = new File(mainCricketDir + CricketUtil.MATCHES_DIRECTORY 
 						+ session_match.getMatch().getMatchFileName()).lastModified();
+				MatchStats = CricketFunctions.getAllEvents(session_match,session_Configurations.getBroadcaster(), session_match.getEventFile().getEvents());
 			}
 			return objectMapper.writeValueAsString(session_match).toString();
 		default:

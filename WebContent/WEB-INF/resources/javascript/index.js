@@ -543,7 +543,9 @@ function processCricketProcedures(whatToProcess)
 {
 	var valueToProcess;
 	switch(whatToProcess) {
-	
+	case 'GET-CATEGORY-DATA':
+		valueToProcess = $('#Category option:selected').val();
+		break;
 	case 'SAVE_GRAPHICS':
 		valueToProcess = $('#savePointsTable').val();
 		break;	
@@ -632,6 +634,23 @@ function processCricketProcedures(whatToProcess)
 					alert("Data is Loaded");
 				}
 				break;
+			case 'GET-CATEGORY-DATA':
+			    var matchSelect1 = document.getElementById('selectedMatch');
+			    matchSelect1.innerHTML = '';
+			    if (data.matchFiles && data.matchFiles.length > 0) {
+			        data.matchFiles.forEach(function(fileName) {
+			            var option = document.createElement('option');
+			            option.value = fileName;
+			            option.text = fileName;
+			            matchSelect1.appendChild(option);
+			        });
+			    } else {
+			        var option = document.createElement('option');
+			        option.value = '';
+			        option.text = '-- No matches found --';
+			        matchSelect1.appendChild(option);
+			    }
+			    break;
 			case 'SAVE_GRAPHICS':
 				$('#select_graphic_options_div').empty();
 				document.getElementById('select_graphic_options_div').style.display = 'none';

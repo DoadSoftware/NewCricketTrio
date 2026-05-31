@@ -135,16 +135,36 @@ public class DOAD_TRIO extends Scene{
 			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[2]);
 			break;
 			
-		case"POPULATE_GRAPHICS_COMPARISION":
-			if(valueToProcess.split(",")[1].equalsIgnoreCase("AR")){
-				DoadWriteToTrio(print_writer, "read_template Comparison");
-			}else {
-				DoadWriteToTrio(print_writer, "read_template Comparison-Drone");
-			}
-			
-			populateComparison(print_writer, match);
-			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
-			break;
+//		case"POPULATE_GRAPHICS_COMPARISION":
+//			if(valueToProcess.split(",")[1].equalsIgnoreCase("AR")){
+//				DoadWriteToTrio(print_writer, "read_template Comparison");
+//			}else {
+//				DoadWriteToTrio(print_writer, "read_template Comparison-Drone");
+//			}
+//			
+//			populateComparison(print_writer, match);
+//			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
+//			break;
+		case "POPULATE_GRAPHICS_COMPARISION":
+		    String template = valueToProcess.split(",")[1].equalsIgnoreCase("AR") 
+		        ? "read_template Comparison" 
+		        : "read_template Comparison-Drone";
+
+		    Inning inning2 = match.getMatch().getInning().get(1);
+		    boolean homeIsBatting = match.getSetup().getHomeTeamId() == inning2.getBattingTeamId();
+
+		    StringBuilder sb = new StringBuilder();
+		    sb.append(valueToProcess.split(",")[1].equalsIgnoreCase("AR") ? "read_template Comparison" : "read_template Comparison-Drone").append(return_key).append(line_feed);
+		    sb.append("tabfield:set_value_no_update 001-TEAM-REF-NAME-1 ").append(homeIsBatting ? match.getSetup().getAwayTeam().getTeamName4() : match.getSetup().getHomeTeam().getTeamName4()).append(return_key).append(line_feed);
+		    sb.append("tabfield:set_value_no_update 002-TEAM-REF-NAME-2 ").append(homeIsBatting ? match.getSetup().getHomeTeam().getTeamName4() : match.getSetup().getAwayTeam().getTeamName4()).append(return_key).append(line_feed);
+		    sb.append("tabfield:set_value_no_update 000-MATCH-NUMBER AFTER ").append(CricketFunctions.OverBalls(inning2.getTotalOvers(), inning2.getTotalBalls())).append(" OVERS").append(return_key).append(line_feed);
+		    sb.append("tabfield:set_value_no_update 002-DATA01 ").append(IndexController.MatchStats.getInningCompare().getTotalRuns()).append("-").append(IndexController.MatchStats.getInningCompare().getTotalWickets()).append(return_key).append(line_feed);
+		    sb.append("tabfield:set_value_no_update 002-DATA02 ").append(inning2.getTotalRuns()).append("-").append(inning2.getTotalWickets()).append(return_key).append(line_feed);
+		    sb.append("saveas ").append(valueToProcess.split(",")[0]).append(return_key).append(line_feed);
+
+		    print_writer.print(sb.toString());
+		    print_writer.flush();
+		    break;
 		case "POPULATE_GRAPHICS_TARGET":
 			if(valueToProcess.split(",")[1].equalsIgnoreCase("AR")){
 				DoadWriteToTrio(print_writer, "read_template Target");
@@ -339,11 +359,21 @@ public class DOAD_TRIO extends Scene{
 			populateRUNRATE(print_writer, match,cricketService);
 			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
 			break;
+//		case "POPULATE_GRAPHICS_BOUNDARIES":
+//			DoadWriteToTrio(print_writer, "read_template BOUNDARIES");
+//			populateBoundaries(print_writer, match,cricketService,Integer.valueOf(valueToProcess.split(",")[1]));
+//			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
+//			break;
 		case "POPULATE_GRAPHICS_BOUNDARIES":
-			DoadWriteToTrio(print_writer, "read_template BOUNDARIES");
-			populateBoundaries(print_writer, match,cricketService,Integer.valueOf(valueToProcess.split(",")[1]));
-			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
-			break;	
+		    String[] parts = valueToProcess.split(",");
+		    DoadWriteToTrio(print_writer, "read_template BOUNDARIES");
+		    print_writer.flush();
+
+		    Thread.sleep(300); // give Trio time to finish loading template
+
+		    populateBoundaries(print_writer, match, cricketService, Integer.valueOf(parts[1]));
+		    DoadWriteToTrio(print_writer, "saveas " + parts[0]);
+		    break;
 			
 		case "POPULATE_DOUBLEMATCHID":	
 			//System.out.println("Valuetoprocess " + valueToProcess);
@@ -2017,28 +2047,63 @@ public class DOAD_TRIO extends Scene{
 		DoadWriteToTrio(print_writer,  "tabfield:set_value_no_update 004-PLAYER-IMAGE \"" + photo + "\"");
 	}
  	private void populateComparison(PrintWriter print_writer,MatchAllData match) {
- 		
  		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAM-REF-NAME-1 " + (match.getSetup().getHomeTeamId()==
  				 match.getMatch().getInning().get(1).getBowlingTeamId() ? match.getSetup().getHomeTeam().getTeamName4() : match.getSetup().getAwayTeam().getTeamName4() ));
 		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-TEAM-REF-NAME-2 "+(match.getSetup().getHomeTeamId()==
  				 match.getMatch().getInning().get(1).getBattingTeamId() ? match.getSetup().getHomeTeam().getTeamName4() : match.getSetup().getAwayTeam().getTeamName4() ));			 
 		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-MATCH-NUMBER "+"AFTER "+
 		 CricketFunctions.OverBalls(match.getMatch().getInning().get(1).getTotalOvers(), match.getMatch().getInning().get(1).getTotalBalls())+" OVERS");
-		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-DATA01 "+ CricketFunctions.compareInningData(match, "-", 1, match.getEventFile().getEvents()));
-		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-DATA02 "+ CricketFunctions.compareInningData(match, "-", 2, match.getEventFile().getEvents()));
+		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-DATA01 "+ IndexController.MatchStats.getInningCompare().getTotalRuns() + "-"+ 
+		 IndexController.MatchStats.getInningCompare().getTotalWickets());
+		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-DATA02 "+ match.getMatch().getInning().get(1).getTotalRuns() + "-"+ match.getMatch().getInning().get(1).getTotalWickets());
 	}
- 	private void populateTarget(PrintWriter print_writer,MatchAllData match) {
- 		
- 		//targetrun
- 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-TARGET "+  CricketFunctions.GetTargetData(match).getTargetRuns());
- 		
- 		//teamname
- 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-TeamRefName "+ match.getMatch().getInning().get(1).getBatting_team().getTeamBadge());
- 		
- 		//Target
- 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TARGET-HEAD "+  "TARGET");
- 		
-	}
+	
+//	private void populateComparison(PrintWriter print_writer, MatchAllData match) {
+//	    
+//	    Inning inning2 = match.getMatch().getInning().get(1);
+//	    
+//	    boolean homeIsBatting = match.getSetup().getHomeTeamId() == inning2.getBattingTeamId();
+//	    
+//	    String team1Name = homeIsBatting 
+//	        ? match.getSetup().getAwayTeam().getTeamName4() 
+//	        : match.getSetup().getHomeTeam().getTeamName4();
+//	    
+//	    String team2Name = homeIsBatting 
+//	        ? match.getSetup().getHomeTeam().getTeamName4() 
+//	        : match.getSetup().getAwayTeam().getTeamName4();
+//
+//	    String[] commands = {
+//	        "tabfield:set_value_no_update 001-TEAM-REF-NAME-1 " + team1Name,
+//	        "tabfield:set_value_no_update 002-TEAM-REF-NAME-2 " + team2Name,
+//	        "tabfield:set_value_no_update 000-MATCH-NUMBER AFTER " + CricketFunctions.OverBalls(inning2.getTotalOvers(), inning2.getTotalBalls()) + " OVERS",
+//	        "tabfield:set_value_no_update 002-DATA01 " + IndexController.MatchStats.getInningCompare().getTotalRuns() + "-" + IndexController.MatchStats.getInningCompare().getTotalWickets(),
+//	        "tabfield:set_value_no_update 002-DATA02 " + inning2.getTotalRuns() + "-" + inning2.getTotalWickets()
+//	    };
+//
+//	    DoadWriteToTrio(print_writer, String.join("\n", commands));
+//	}
+// 	private void populateTarget(PrintWriter print_writer,MatchAllData match) {
+// 		//targetrun
+// 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-TARGET "+  CricketFunctions.GetTargetData(match).getTargetRuns());
+// 		
+// 		//teamname
+// 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-TeamRefName "+ match.getMatch().getInning().get(1).getBatting_team().getTeamBadge());
+// 		
+// 		//Target
+// 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TARGET-HEAD "+  "TARGET");
+// 		
+//	}
+ 	
+ 	private void populateTarget(PrintWriter print_writer, MatchAllData match) {
+ 	    
+ 	    StringBuilder sb = new StringBuilder();
+ 	    sb.append("tabfield:set_value_no_update 002-TARGET ").append(CricketFunctions.GetTargetData(match).getTargetRuns()).append(return_key).append(line_feed);
+ 	    sb.append("tabfield:set_value_no_update 000-TeamRefName ").append(match.getMatch().getInning().get(1).getBatting_team().getTeamBadge()).append(return_key).append(line_feed);
+ 	    sb.append("tabfield:set_value_no_update 001-TARGET-HEAD TARGET").append(return_key).append(line_feed);
+
+ 	    print_writer.print(sb.toString());
+ 	    print_writer.flush();
+ 	}
  	private void populateLASTXBALLS(PrintWriter print_writer,MatchAllData match,int ballno) {
  		
  		this_data_str = new ArrayList<String>();
@@ -2962,20 +3027,50 @@ private void populateProjected(PrintWriter print_writer,MatchAllData match) {
 		}
  	}
     
-  private void populateBoundaries(PrintWriter print_writer,MatchAllData match,CricketService cricketService,int innn) {
-	for(Inning inn : match.getMatch().getInning()) {
-		if(inn.getInningNumber() == (innn-1)) {
-			DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAM-REF-NAME-1 " + inn.getBatting_team().getTeamBadge());
-			DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-TEAM-REF-NAME-2 " + inn.getBatting_team().getTeamBadge());
-			DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 107-TEXT " + "FOUR"+ CricketFunctions.Plural(inn.getTotalFours()).toUpperCase() +": " + inn.getTotalFours());
-			DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 108-TEXT " + "SIXES"+ ": " + inn.getTotalSixes());
-		}
-	}
- 		
-    
- 	}
+//  private void populateBoundaries(PrintWriter print_writer,MatchAllData match,CricketService cricketService,int innn) {
+//	for(Inning inn : match.getMatch().getInning()) {
+//		if(inn.getInningNumber() == (innn-1)) {
+//			DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAM-REF-NAME-1 " + inn.getBatting_team().getTeamBadge());
+//			DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-TEAM-REF-NAME-2 " + inn.getBatting_team().getTeamBadge());
+//			DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 107-TEXT " + "FOUR"+ CricketFunctions.Plural(inn.getTotalFours()).toUpperCase() +": " + inn.getTotalFours());
+//			DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 108-TEXT " + "SIXES"+ ": " + inn.getTotalSixes());
+//		}
+//	}
+// 		
+//    
+// 	}
   
-  
+      private void populateBoundaries(PrintWriter print_writer, MatchAllData match, CricketService cricketService, int innn) {
+    	    StringBuilder batchCommands = new StringBuilder();
+    	    
+    	    for (Inning inn : match.getMatch().getInning()) {
+    	        if (inn.getInningNumber() == (innn - 1)) {
+    	            batchCommands
+    	                .append("tabfield:set_value_no_update 001-TEAM-REF-NAME-1 ")
+    	                .append(inn.getBatting_team().getTeamBadge())
+    	                .append(return_key).append(line_feed)
+    	                
+    	                .append("tabfield:set_value_no_update 002-TEAM-REF-NAME-2 ")
+    	                .append(inn.getBatting_team().getTeamBadge())
+    	                .append(return_key).append(line_feed)
+    	                
+    	                .append("tabfield:set_value_no_update 107-TEXT ")
+    	                .append("FOUR").append(CricketFunctions.Plural(inn.getTotalFours()).toUpperCase())
+    	                .append(": ").append(inn.getTotalFours())
+    	                .append(return_key).append(line_feed)
+    	                
+    	                .append("tabfield:set_value_no_update 108-TEXT ")
+    	                .append("SIXES: ").append(inn.getTotalSixes())
+    	                .append(return_key).append(line_feed);
+    	            
+    	            break; // ← Add this! No need to keep looping after match found
+    	        }
+    	    }
+    	    
+    	    // Single write instead of 4 separate writes
+    	    print_writer.print(batchCommands.toString());
+    	    print_writer.flush();
+    	}
   
   
   
