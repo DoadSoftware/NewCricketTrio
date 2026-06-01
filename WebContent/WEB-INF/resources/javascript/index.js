@@ -175,24 +175,24 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			$("#expiry_message").hide();
 			processCricketProcedures('ISPL_50_50_GRAPHIC_OPTIONS');
 			break;*/
-		case 71://G - TAPE BALL
+		/*case 71://G - TAPE BALL
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
 			processCricketProcedures('ISPL_TAPEBALL_GRAPHIC_OPTIONS');
-			break;
+			break;*/
 		case 66://B - COmparison
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
 			addItemsToList('ISPL_COMPARISION_OPTIONS',null);
 			break;
-		case 88://X - Boundaries
+		/*case 88://X - Boundaries
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
 			addItemsToList('ISPL_BOUNDARIES_OPTIONS',null);
-			break;	
+			break;*/	
 		/*case 78://N - TAPE BALL
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
@@ -211,7 +211,7 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			$("#expiry_message").hide();
 			processCricketProcedures('ISPL_PREVIOUS_MATCH_SUMMARY_GRAPHIC_OPTIONS');
 			break;*/
-		case 114://F3 - PREVIOUS MATCH SUMMARY
+		/*case 114://F3 - PREVIOUS MATCH SUMMARY
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
@@ -228,7 +228,7 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
 			addItemsToList('ISPL_MVP_OPTIONS_LEADERBOARD', null);
-			break;		
+			break;	*/	
 		case 65://a - Projected
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
@@ -241,12 +241,12 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			$("#expiry_message").hide();
 			addItemsToList('ISPL_TARGET_OPTIONS',null);
 			break;
-		case 117://F6 - TOSS
+		/*case 117://F6 - TOSS
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
 			addItemsToList('ISPL_TOSS_OPTIONS',null);
-			break;
+			break;*/
 		case 67://c equation
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
@@ -273,19 +273,19 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			$("#expiry_message").hide();
 			addItemsToList('DOUBLEOPENERPROFILEBAT_OPTIONS',null);
 			break;	
-		case 90://Z - Debu
+		/*case 90://Z - Debu
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
 			addItemsToList('DOUBLEOPENERPROFILEBAT_OPTIONS',null);
-			break;	
+			break;*/	
 		case 120://F9 Ball profile
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
 			addItemsToList('PLAYERPROFILEBALL_OPTIONS',null);
 			break;
-		case 75://k Auction profile
+		/*case 75://k Auction profile
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
@@ -296,7 +296,7 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
 			addItemsToList('PLAYERPROFILEBATAUCTION_OPTIONS',null);
-			break;
+			break;*/
 		case 70://F - Fixture
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
@@ -580,10 +580,14 @@ function processCricketProcedures(whatToProcess)
 		+ $('#savePointsTable').val();
 		break;
 		
-	case "POPULATE_GRAPHICS_OPENERBATPROFILE":
+	/*case "POPULATE_GRAPHICS_OPENERBATPROFILE":
 		valueToProcess = $('#selectPlayerName1').val() + ','+$('#selectPlayerName2').val() + ',' + $('#selectProfile').val()+ ','+ $('#selectGraphicType').val()+',' + $('#savePointsTable').val() 
 		+ ',' + document.getElementById('which_keypress').value;
-		break;
+		break;*/
+	case "POPULATE_GRAPHICS_OPENERBATPROFILE":
+		    valueToProcess = $('#selectPlayerName1').val() + ',' + $('#selectPlayerName2').val() + ',' + $('#selectGraphicType').val() + ',' + $('#savePointsTable').val()
+		    + ',' + document.getElementById('which_keypress').value;
+		    break;	
 		
 	case "POPULATE_DOUBLEMATCHID":
 		valueToProcess =  $('#selectday').val()+ ','+ $('#selectGraphicType').val() +',' + $('#savePointsTable').val();
@@ -958,7 +962,156 @@ function addItemsToList(whatToProcess, dataToProcess)
      			 document.getElementById('select_graphic_options_div').style.display = '';
 		   break;
 		   
-		    case 'DOUBLEOPENERPROFILEBAT_OPTIONS':
+		   case 'DOUBLEOPENERPROFILEBAT_OPTIONS':
+		       $('#select_graphic_options_div').empty();
+
+		       header_text = document.createElement('h6');
+		       header_text.innerHTML = 'Select Graphic Options';
+		       document.getElementById('select_graphic_options_div').appendChild(header_text);
+
+		       table = document.createElement('table');
+		       table.setAttribute('class', 'table table-bordered');
+
+		       tbody = document.createElement('tbody');
+		       table.appendChild(tbody);
+		       document.getElementById('select_graphic_options_div').appendChild(table);
+
+		       row = tbody.insertRow(tbody.rows.length);
+		       header_text.innerHTML = 'BAT PLAYER PROFILE';
+
+		       // --- Player 1 Dropdown ---
+		       select = document.createElement('select');
+		       select.id = 'selectPlayerName1';
+		       select.name = select.id;
+
+		       match_data.match.inning.forEach(function(inn){
+		           if(inn.inningNumber == document.getElementById('which_keypress').value){
+		               if(inn.battingTeamId == match_data.setup.homeTeamId){
+		                   match_data.setup.homeSquad.forEach(function(hs){
+		                       option = document.createElement('option');
+		                       option.value = hs.playerId;
+		                       option.text = hs.full_name;
+		                       select.appendChild(option);
+		                   });
+		                   match_data.setup.homeOtherSquad.forEach(function(hos){
+		                       option = document.createElement('option');
+		                       option.value = hos.playerId;
+		                       option.text = hos.full_name + ' (OTHER)';
+		                       select.appendChild(option);
+		                   });
+		               } else {
+		                   match_data.setup.awaySquad.forEach(function(as){
+		                       option = document.createElement('option');
+		                       option.value = as.playerId;
+		                       option.text = as.full_name;
+		                       select.appendChild(option);
+		                   });
+		                   match_data.setup.awayOtherSquad.forEach(function(aos){
+		                       option = document.createElement('option');
+		                       option.value = aos.playerId;
+		                       option.text = aos.full_name + ' (OTHER)';
+		                       select.appendChild(option);
+		                   });
+		               }
+		           }
+		       });
+
+		       row.insertCell(0).appendChild(select);  // Cell 0 - Player 1
+
+		       // --- Player 2 Dropdown ---
+		       select = document.createElement('select');
+		       select.id = 'selectPlayerName2';
+		       select.name = select.id;
+
+		       match_data.match.inning.forEach(function(inn){
+		           if(inn.inningNumber == document.getElementById('which_keypress').value){
+		               if(inn.battingTeamId == match_data.setup.homeTeamId){
+		                   match_data.setup.homeSquad.forEach(function(hs){
+		                       option = document.createElement('option');
+		                       option.value = hs.playerId;
+		                       option.text = hs.full_name;
+		                       select.appendChild(option);
+		                   });
+		                   match_data.setup.homeOtherSquad.forEach(function(hos){
+		                       option = document.createElement('option');
+		                       option.value = hos.playerId;
+		                       option.text = hos.full_name + ' (OTHER)';
+		                       select.appendChild(option);
+		                   });
+		               } else {
+		                   match_data.setup.awaySquad.forEach(function(as){
+		                       option = document.createElement('option');
+		                       option.value = as.playerId;
+		                       option.text = as.full_name;
+		                       select.appendChild(option);
+		                   });
+		                   match_data.setup.awayOtherSquad.forEach(function(aos){
+		                       option = document.createElement('option');
+		                       option.value = aos.playerId;
+		                       option.text = aos.full_name + ' (OTHER)';
+		                       select.appendChild(option);
+		                   });
+		               }
+		           }
+		       });
+
+		       row.insertCell(1).appendChild(select);  // Cell 1 - Player 2
+
+		       // --- Graphic Type Dropdown ---
+		       select = document.createElement('select');
+		       select.id = 'selectGraphicType';
+		       select.name = select.id;
+
+		       option = document.createElement('option');
+		       option.value = 'AR';
+		       option.text = 'AR';
+		       select.appendChild(option);
+
+		       option = document.createElement('option');
+		       option.value = 'Drone';
+		       option.text = 'Drone';
+		       select.appendChild(option);
+
+		       row.insertCell(2).appendChild(select);  // Cell 2 - Graphic Type ✅ fixed from 3→2
+
+		       // --- Page No. Input ---
+		       select = document.createElement('input');
+		       select.type = "text";
+		       select.id = 'savePointsTable';
+		       select.value = '';
+
+		       header_text = document.createElement('label');
+		       header_text.innerHTML = 'Page No.';
+		       header_text.htmlFor = select.id;
+
+		       row.insertCell(3).appendChild(select);  // Cell 3 - Page No. ✅ fixed from 4→3
+
+		       // --- Populate & Cancel Buttons ---
+		       option = document.createElement('input');
+		       option.type = 'button';
+		       option.name = 'opner_doubleprofile_bat';
+		       option.value = 'populate';
+		       option.id = option.name;
+		       option.setAttribute('onclick', "processUserSelection(this)");
+
+		       div = document.createElement('div');
+		       div.append(option);
+
+		       option = document.createElement('input');
+		       option.type = 'button';
+		       option.name = 'cancel_graphics_btn';
+		       option.id = option.name;
+		       option.value = 'Cancel';
+		       option.setAttribute('onclick', 'processUserSelection(this)');
+
+		       div.append(option);
+
+		       row.insertCell(4).appendChild(div);  // Cell 4 - Buttons ✅ fixed from 6→4
+
+		       document.getElementById('select_graphic_options_div').style.display = '';
+		       break;
+		   
+		   /* case 'DOUBLEOPENERPROFILEBAT_OPTIONS':
 	    	$('#select_graphic_options_div').empty();
 	
 			header_text = document.createElement('h6');
@@ -1057,13 +1210,13 @@ function addItemsToList(whatToProcess, dataToProcess)
 			   select.name = select.id;
 			
 				option = document.createElement('option');
-				option.value = 'ISPL S1';
-				option.text = 'ISPL S1';
+				option.value = 'T20 MUMBAI';
+				option.text = 'T20 MUMBAI CAREER';
 				select.appendChild(option);
 				
 				option = document.createElement('option');
-				option.value = 'ISPL S2';
-				option.text = 'ISPL S2';
+				option.value = 'MT20 SEASON 3';
+				option.text = 'MT20 SEASON 3';
 				select.appendChild(option);
 				
 				option = document.createElement('option');
@@ -1147,7 +1300,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 			    row.insertCell(6).appendChild(div);
 			    
      			 document.getElementById('select_graphic_options_div').style.display = '';
-			break;
+			break;*/
 		   case 'DOUBLEPLAYERPROFILEBAT_OPTIONS':
 	    	$('#select_graphic_options_div').empty();
 	
@@ -1382,24 +1535,14 @@ function addItemsToList(whatToProcess, dataToProcess)
 			   select.id = 'selectProfile';
 			   select.name = select.id;
 			
-				option = document.createElement('option');
-				option.value = 'ISPL S1';
-				option.text = 'ISPL S1';
+			   option = document.createElement('option');
+				option.value = 'T20 MUMBAI';
+				option.text = 'T20 MUMBAI CAREER';
 				select.appendChild(option);
 				
 				option = document.createElement('option');
-				option.value = 'ISPL S2';
-				option.text = 'ISPL S2';
-				select.appendChild(option);
-				
-				option = document.createElement('option');
-				option.value = 'ISPL_CAREER';
-				option.text = 'ISPL CAREER';
-				select.appendChild(option);
-				
-				option = document.createElement('option');
-				option.value = 'THIS SERIES';
-				option.text = 'THIS SERIES';
+				option.value = 'MT20 SEASON 3';
+				option.text = 'MT20 SEASON 3';
 				select.appendChild(option);
 				
 				row.insertCell(1).appendChild(select); 
@@ -1430,19 +1573,6 @@ function addItemsToList(whatToProcess, dataToProcess)
 				header_text.htmlFor = select.id;
 				
 				row.insertCell(3).appendChild(select);
-				 
-				option = document.createElement('input');
-			    option.type = 'button';
-				
-				option = document.createElement('input');
-			    option.type = 'button';
-				option.name = 'player_profile_prview';
-				option.value = 'Preview';
-			    option.id = option.name;
-			    option.setAttribute('onclick',"processUserSelection(this)");
-			    div = document.createElement('div');
-			    div.append(option);
-			    row.insertCell(4).appendChild(div);
 
 		    	option = document.createElement('input');
 			    option.type = 'button';
@@ -1466,7 +1596,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 			
 			    div.append(option);
 			    
-			    row.insertCell(5).appendChild(div);
+			    row.insertCell(4).appendChild(div);
 			    
      			 document.getElementById('select_graphic_options_div').style.display = '';
 			break;

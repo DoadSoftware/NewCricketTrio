@@ -61,6 +61,50 @@
 	    </div>
        </div>
     </div>
+    <div class="row mt-4" id="caption_working_section">
+      <div class="col-md-10 offset-md-1">
+        <div class="card card-outline-secondary">
+          <div class="card-header">
+            <h3 class="mb-0">Caption &amp; Working</h3>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover mb-0" id="caption_working_table">
+                <thead style="background-color: #2E008B; color: #ffffff;">
+                  <tr>
+                    <th scope="col" style="width: 5%;">#</th>
+                    <th scope="col" style="width: 30%;">Caption</th>
+                    <th scope="col" style="width: 35%;">Working</th>
+                  </tr>
+                </thead>
+                <tbody id="caption_working_tbody">
+                  <!-- Row 1 -->
+                  <tr>
+                    <td>1</td><td>(b)</td><td>Comparison</td>
+                  </tr>
+                  <!-- Row 2 -->
+                  <tr>
+                    <td>2</td><td>(c)</td><td>Equation</td>
+                  </tr>
+                  <!-- Row 3 -->
+                  <tr>
+                    <td>3</td><td>(a)</td><td>Projected</td>
+                  </tr>
+                 <!-- Row 4 -->
+                  <tr>
+                    <td>4</td><td>(f5)</td><td>Target</td>
+                  </tr> 
+                  <!-- Row 5 -->
+                  <tr>
+                    <td>5</td><td>(n)</td><td>Opener name</td>
+                  </tr> 
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 <input type="hidden" name="select_broadcaster" id="select_broadcaster" value="${session_selected_broadcaster}"/>

@@ -8,6 +8,7 @@ import org.hibernate.SessionFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy;
 import org.springframework.orm.hibernate5.HibernateTransactionManager;
 import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -25,11 +26,13 @@ public class DataSourceConfig {
         
         DriverManagerDataSource men = new DriverManagerDataSource();
         men.setDriverClassName("net.ucanaccess.jdbc.UcanaccessDriver");
-        men.setUrl("jdbc:ucanaccess://C:\\\\Sports\\\\CricketMen\\\\Database\\\\CricketTeams.mdb");
+       // men.setUrl("jdbc:ucanaccess://C:\\\\Sports\\\\CricketMen\\\\Database\\\\CricketTeams.mdb");
+        men.setUrl("jdbc:ucanaccess://C:\\Sports\\CricketMen\\Database\\CricketTeams.mdb;");
         
         DriverManagerDataSource women = new DriverManagerDataSource();
         women.setDriverClassName("net.ucanaccess.jdbc.UcanaccessDriver");
-        women.setUrl("jdbc:ucanaccess://C:\\\\Sports\\\\CricketWomen\\\\Database\\\\CricketTeams.mdb");
+        //women.setUrl("jdbc:ucanaccess://C:\\\\Sports\\\\CricketWomen\\\\Database\\\\CricketTeams.mdb");
+        women.setUrl("jdbc:ucanaccess://C:\\Sports\\CricketWomen\\Database\\CricketTeams.mdb;");
         
         Map<Object, Object> targetDataSources = new HashMap<>();
         targetDataSources.put("LOCAL", dataSource);

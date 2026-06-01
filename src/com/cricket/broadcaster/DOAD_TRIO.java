@@ -11,6 +11,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+
 import com.cricket.containers.Scene;
 import com.cricket.controller.IndexController;
 import com.cricket.ispl.mvp_leaderBoard;
@@ -155,11 +157,11 @@ public class DOAD_TRIO extends Scene{
 
 		    StringBuilder sb = new StringBuilder();
 		    sb.append(valueToProcess.split(",")[1].equalsIgnoreCase("AR") ? "read_template Comparison" : "read_template Comparison-Drone").append(return_key).append(line_feed);
-		    sb.append("tabfield:set_value_no_update 001-TEAM-REF-NAME-1 ").append(homeIsBatting ? match.getSetup().getAwayTeam().getTeamName4() : match.getSetup().getHomeTeam().getTeamName4()).append(return_key).append(line_feed);
-		    sb.append("tabfield:set_value_no_update 002-TEAM-REF-NAME-2 ").append(homeIsBatting ? match.getSetup().getHomeTeam().getTeamName4() : match.getSetup().getAwayTeam().getTeamName4()).append(return_key).append(line_feed);
-		    sb.append("tabfield:set_value_no_update 000-MATCH-NUMBER AFTER ").append(CricketFunctions.OverBalls(inning2.getTotalOvers(), inning2.getTotalBalls())).append(" OVERS").append(return_key).append(line_feed);
-		    sb.append("tabfield:set_value_no_update 002-DATA01 ").append(IndexController.MatchStats.getInningCompare().getTotalRuns()).append("-").append(IndexController.MatchStats.getInningCompare().getTotalWickets()).append(return_key).append(line_feed);
-		    sb.append("tabfield:set_value_no_update 002-DATA02 ").append(inning2.getTotalRuns()).append("-").append(inning2.getTotalWickets()).append(return_key).append(line_feed);
+		    sb.append("tabfield:set_value_no_update 001-TEAMNAME ").append(homeIsBatting ? match.getSetup().getAwayTeam().getTeamBadge() : match.getSetup().getHomeTeam().getTeamBadge()).append(return_key).append(line_feed);
+		    sb.append("tabfield:set_value_no_update 002-TEAMNAME02 ").append(homeIsBatting ? match.getSetup().getHomeTeam().getTeamBadge() : match.getSetup().getAwayTeam().getTeamBadge()).append(return_key).append(line_feed);
+		    sb.append("tabfield:set_value_no_update 003-Header AFTER ").append(CricketFunctions.OverBalls(inning2.getTotalOvers(), inning2.getTotalBalls())).append(" OVERS").append(return_key).append(line_feed);
+		    sb.append("tabfield:set_value_no_update 101-RUNS01 ").append(IndexController.MatchStats.getInningCompare().getTotalRuns()).append("-").append(IndexController.MatchStats.getInningCompare().getTotalWickets()).append(return_key).append(line_feed);
+		    sb.append("tabfield:set_value_no_update 102-RUNS02 ").append(inning2.getTotalRuns()).append("-").append(inning2.getTotalWickets()).append(return_key).append(line_feed);
 		    sb.append("saveas ").append(valueToProcess.split(",")[0]).append(return_key).append(line_feed);
 
 		    print_writer.print(sb.toString());
@@ -177,7 +179,7 @@ public class DOAD_TRIO extends Scene{
 			break;
 		case "POPULATE_GRAPHICS_PROJECTED":
 			if(valueToProcess.split(",")[1].equalsIgnoreCase("AR")){
-				DoadWriteToTrio(print_writer, "read_template Projected_Score");
+				DoadWriteToTrio(print_writer, "read_template Projected");
 			}else {
 				DoadWriteToTrio(print_writer, "read_template Projected_Score_Drone");
 			}
@@ -207,7 +209,7 @@ public class DOAD_TRIO extends Scene{
 			break;
 		case "POPULATE_GRAPHICS_MATCHID":
 			if(valueToProcess.split(",")[1].equalsIgnoreCase("AR")){
-				DoadWriteToTrio(print_writer, "read_template MatchID");
+				DoadWriteToTrio(print_writer, "read_template Ident");
 			}else {
 				DoadWriteToTrio(print_writer, "read_template MatchID_Drone");
 			}
@@ -313,7 +315,7 @@ public class DOAD_TRIO extends Scene{
 			break;			
 		case "POPULATE_GRAPHICS_EQUATION":
 			if(valueToProcess.split(",")[1].equalsIgnoreCase("AR")){
-				DoadWriteToTrio(print_writer, "read_template Equation");
+				DoadWriteToTrio(print_writer, "read_template RunsAndBall");
 			}else {
 				DoadWriteToTrio(print_writer, "read_template Equation_Drone");
 			}
@@ -386,172 +388,46 @@ public class DOAD_TRIO extends Scene{
 			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[2]);
 			break;	
 		case "POPULATE_GRAPHICS_BATPROFILE":
-			debut = "NO";
-			for(Player ply: cricketService.getAllPlayer()) {
-				if(ply.getPlayerId() == Integer.valueOf(valueToProcess.split(",")[0])) {
-					if(ply.getDebut().equalsIgnoreCase("YES")) {
-						debut = "YES";
-						player = CricketFunctions.getPlayerFromMatchData(Integer.valueOf(valueToProcess.split(",")[0]), match);
-						if(match.getSetup().getHomeTeamId() == player.getTeamId()) {
-							team = match.getSetup().getHomeTeam();
-						} else if(match.getSetup().getAwayTeamId() == player.getTeamId()) {
-							team = match.getSetup().getAwayTeam();
-						}
-					}else {
-						player = CricketFunctions.getPlayerFromMatchData(Integer.valueOf(valueToProcess.split(",")[0]), match);
-						if(valueToProcess.split(",")[1].equalsIgnoreCase("ISPL_CAREER")) {
-							profile = "ISPL CAREER";
-						}else if(valueToProcess.split(",")[1].equalsIgnoreCase("ISPL S1")){
-							profile = "ISPL SEASON 1";
-						}else if(valueToProcess.split(",")[1].equalsIgnoreCase("ISPL S2")){
-							profile = "ISPL SEASON 2";
-						}else if(valueToProcess.split(",")[1].equalsIgnoreCase("THIS SERIES")){
-							profile = "ISPL SEASON 3";
-							PastDataToCrr = CricketFunctions.extractTournamentData("CURRENT_MATCH_DATA", false, headToHead.getH2hPlayer(), 
-									cricketService, match, pasttornament);
-							
-							top_Batsman = new ArrayList<BestStats>();
-							topbowler = new ArrayList<BestStats>();
-							for(Tournament tour: PastDataToCrr) {
-								for(BestStats bs:tour.getBatsman_best_Stats()) {
-									top_Batsman.add(bs);
-								}
-								for(BestStats bfig: tour.getBowler_best_Stats()) {
-									topbowler.add(bfig);
-								}
-							}
-							//System.out.println(PastDataToCrr.size());
-							Collections.sort(top_Batsman,new CricketFunctions.PlayerBestStatsComparator());
-							Collections.sort(topbowler,new CricketFunctions.PlayerBestStatsComparator());
-							
-							tournament = PastDataToCrr.stream().filter(tour->tour.getPlayerId() == player.getPlayerId()).findAny().orElse(null);
-						}
-						
-						if(match.getSetup().getHomeTeamId() == player.getTeamId()) {
-							team = match.getSetup().getHomeTeam();
-						} else if(match.getSetup().getAwayTeamId() == player.getTeamId()) {
-							team = match.getSetup().getAwayTeam();
-						}
-						if(valueToProcess.split(",")[1].equalsIgnoreCase("ISPL S1") || valueToProcess.split(",")[1].equalsIgnoreCase("ISPL S2")) {
-							statsType = cricketService.getAllStatsType().stream().filter(stype -> stype.getStats_short_name().equalsIgnoreCase(valueToProcess.split(",")[1])).findAny().orElse(null);
-							if(statsType == null) {
-								return "PopulateL3rdPlayerProfile: Stats Type not found for profile [" + valueToProcess.split(",")[1] + "]";
-							}
-							stat = cricketService.getAllStats().stream().filter(st -> st.getPlayer_id() == player.getPlayerId() && statsType.getStats_id() == st.getStats_type_id()).findAny().orElse(null);
-							if(stat == null) {
-								return "populatePlayerProfile: No stats found for player id [" + player.getFull_name() + "] from database is returning NULL";
-							}
-							stat.setStats_type(statsType);
-						}
-						if(valueToProcess.split(",")[1].equalsIgnoreCase("ISPL_CAREER")) {
-							statsType = new StatsType();
-							stat = new Statistics();
-							
-							Statistics statS1 = CricketFunctions.getStatsByType(Integer.valueOf(valueToProcess.split(",")[0]), "ISPL S1", cricketService.getAllStatsType(), cricketService.getAllStats());
-						    Statistics statS2 = CricketFunctions.getStatsByType(Integer.valueOf(valueToProcess.split(",")[0]), "ISPL S2", cricketService.getAllStatsType(), cricketService.getAllStats());
-						    
-						    if (statS1 == null && statS2 == null) {
-						        return "InfoBarPlayerProfile: Stats not found for Player Id [" + valueToProcess.split(",")[0] + "]";
-						    }
-						    stat = statS1 != null ? statS1 : statS2;
-						    stat = CricketFunctions.mergeIsplCareerStats(stat, statS2);
-							
-							statsType = cricketService.getAllStatsType().stream().filter(st -> st.getStats_short_name().equalsIgnoreCase("D10")).findAny().orElse(null);
-							stat.setStats_type(statsType);
-							
-							//System.out.println(stat.getMatches());
-							stat = CricketFunctions.updateTournamentWithH2h(stat, headToHead.getH2hPlayer(), match, CricketUtil.FULL);
-							stat = CricketFunctions.updateStatisticsWithMatchData(stat, match, CricketUtil.FULL);
-						}
-						
-						if(valueToProcess.split(",")[1].equalsIgnoreCase("THIS SERIES")) {
-							//System.out.println("CP");
-							for(int i=0;i<=top_Batsman.size()-1;i++) {
-								if(top_Batsman.get(i).getPlayerId() == player.getPlayerId()) {
-									if(top_Batsman.get(i).getBestEquation() % 2 == 0) {
-										if(top_Batsman.get(i).getBestEquation() / 2  == 0) {
-											best = "-";
-										}else {
-											best = String.valueOf(top_Batsman.get(i).getBestEquation() /2);
-										}
-									}else {
-										best = (top_Batsman.get(i).getBestEquation()-1) / 2 + "*";
-									}
-									break;
-								}else {
-									best = "-";
-								}
-							}
-						}else {
-							if(stat.getRuns_conceded() == 0 || stat.getWickets() == 0) {
-								Data = "-";
-							}else {
-								average = stat.getRuns_conceded()/stat.getWickets();
-								DecimalFormat df_bo = new DecimalFormat("0.00");
-								Data = df_bo.format(average);
-							}
-							if(stat.getFifties() == 0) {
-								fifty = "-";
-							}else {
-								fifty = String.valueOf(stat.getFifties());
-							}
-							
-							if(stat.getThirties() == 0) {
-								thirty = "-";
-							}else {
-								thirty = String.valueOf(stat.getThirties());
-							}
-							
-							if(stat.getHundreds() == 0) {
-								hundred = "-";
-							}else {
-								hundred = String.valueOf(stat.getHundreds());
-							}
-							
-							if(fifty.equalsIgnoreCase("-") && !hundred.equalsIgnoreCase("-")) {
-								fifty = "0";
-							}
-							
-							if(hundred.equalsIgnoreCase("-") && !fifty.equalsIgnoreCase("-")) {
-								hundred = "0";
-							}
-							
-							if(CricketFunctions.generateStrikeRate(stat.getRuns(), stat.getBalls_faced(), 1).trim().isEmpty()) {
-								strikeRate = "-";
-							}else {
-								strikeRate = String.valueOf(CricketFunctions.generateStrikeRate(stat.getRuns(), stat.getBalls_faced(), 0));
-							}
-							
-							if(stat.getRuns() == 0) {
-								runs = "-";
-							}else {
-								runs = String.format("%,d\n", stat.getRuns());
-							}
-							
-							if(CricketFunctions.getAverage(stat.getInnings(), stat.getNot_out(), stat.getRuns(), 2, "-").equalsIgnoreCase("0.00")) {
-								batAverage = "-";
-							}else {
-								batAverage = CricketFunctions.getAverage(stat.getInnings(), stat.getNot_out(), stat.getRuns(), 2, "-");
-							}
-							
-							if(player.getSurname() == null) {
-								surName = "";
-							}else {
-								surName = player.getSurname();
-							}
-							
-							if(stat.getBest_score().equalsIgnoreCase("0")) {
-								best = "-";
-							}else {
-								best = stat.getBest_score();
-							}
-						}
-					}
-						}
-					}
+			System.out.println("valueToProcess+=====================" + valueToProcess);
 			
+			
+				inning = match.getMatch().getInning().stream().filter(inn -> inn.getInningNumber() == Integer.valueOf(valueToProcess.split(",")[4]))
+					.findAny().orElse(null);
+				System.out.println("HELLO");
+				player = CricketFunctions.getPlayerFromMatchData(Integer.valueOf(valueToProcess.split(",")[0]), match);
+				System.out.println("HELLO1");
+				
+				if(!valueToProcess.split(",")[1].equalsIgnoreCase("T20 MUMBAI")) {
+					System.out.println("valueToProcess.split(\",\")[1]" + valueToProcess.split(",")[1]);
+					System.out.println(cricketService.getAllStatsType().toString());
+					statsType = cricketService.getAllStatsType().stream().filter(stype -> stype.getStats_short_name().
+							equalsIgnoreCase(valueToProcess.split(",")[1].trim())).findAny().orElse(null);
+					System.out.println(statsType.getStats_id());
+					stat = cricketService.getAllStats().stream().filter(st -> st.getPlayer_id() == player.getPlayerId() && statsType.getStats_id() == st.getStats_type_id()).findAny().orElse(null);
+					System.out.println("HELLO4");
+					stat.setStats_type(statsType);
+				}
+				System.out.println("HELLO5");
+			
+				switch (valueToProcess.split(",")[1].toUpperCase()) {
+				case "T20 MUMBAI":
+					statsType = cricketService.getAllStatsType().stream().filter(st -> st.getStats_short_name().equalsIgnoreCase("T20 MUMBAI")).findAny().orElse(null);
+					stat = cricketService.getAllStats().stream().filter(st -> st.getPlayer_id() == player.getPlayerId() && statsType.getStats_id() == st.getStats_type_id()).findAny().orElse(null);
+					
+					statsType = cricketService.getAllStatsType().stream().filter(st -> st.getStats_short_name().equalsIgnoreCase("DT20")).findAny().orElse(null);
+					stat.setStats_type(statsType);
+					
+					stat = CricketFunctions.updateTournamentWithH2h(stat, headToHead.getH2hPlayer(), match, CricketUtil.FULL);
+					stat = CricketFunctions.updateStatisticsWithMatchData(stat, match, CricketUtil.FULL);
+					break;
+				}
+//				team = Teams.stream().filter(tm -> tm.getTeamId() == player.getTeamId()).findAny().orElse(null);
+//				if(team == null) {
+//					return "populatePlayerProfile: Team id [" + player.getTeamId() + "] from database is returning NULL";
+//				}
 			if(valueToProcess.split(",")[2].equalsIgnoreCase("AR")) {
-				DoadWriteToTrio(print_writer, "read_template Profile");
+				System.out.println("HELLO6");
+				DoadWriteToTrio(print_writer, "read_template In_AT_Profile");
 			}else {
 				DoadWriteToTrio(print_writer, "read_template Profile_Drone");
 			}
@@ -733,476 +609,503 @@ public class DOAD_TRIO extends Scene{
 			populateProfileAuction(print_writer, match,Integer.valueOf(valueToProcess.split(",")[4]));
 			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[3]);
 			break;
-		case "POPULATE_GRAPHICS_OPENERBATPROFILE":
-			//System.out.println("whattoprocess" + valueToProcess);
-			debut1 ="NO";
-			debut2 ="NO";
-			for(Player ply: cricketService.getAllPlayer()) {
-				if(ply.getPlayerId() == Integer.valueOf(valueToProcess.split(",")[0])) {
-					if(ply.getDebut().equalsIgnoreCase("YES")) {
-						debut1 = "YES";
-						
-					}else {
-						player = CricketFunctions.getPlayerFromMatchData(Integer.valueOf(valueToProcess.split(",")[0]), match);
-						player2 = CricketFunctions.getPlayerFromMatchData(Integer.valueOf(valueToProcess.split(",")[1]), match);
-						if(valueToProcess.split(",")[2].equalsIgnoreCase("ISPL_CAREER")) {
-							profile = "ISPL CAREER";
-						}else if(valueToProcess.split(",")[2].equalsIgnoreCase("ISPL S1")){
-							profile = "ISPL SEASON 1";
-						}else if(valueToProcess.split(",")[2].equalsIgnoreCase("ISPL S2")){
-							profile = "ISPL SEASON 2";
-						}else if(valueToProcess.split(",")[2].equalsIgnoreCase("THIS SERIES")){
-							profile = "ISPL SEASON 3";
-							PastDataToCrr = CricketFunctions.extractTournamentData("CURRENT_MATCH_DATA", false,  headToHead.getH2hPlayer(), cricketService, match, pasttornament);
-							
-							top_Batsman = new ArrayList<BestStats>();
-							for(Tournament tour: PastDataToCrr) {
-								for(BestStats bs:tour.getBatsman_best_Stats()) {
-									top_Batsman.add(bs);
-								}
-							}
-							
-							//System.out.println(PastDataToCrr.size());
-							Collections.sort(top_Batsman,new CricketFunctions.PlayerBestStatsComparator());
-							
-							tournament = PastDataToCrr.stream().filter(tour->tour.getPlayerId() == player.getPlayerId()).findAny().orElse(null);
-							tournament2 = PastDataToCrr.stream().filter(tour->tour.getPlayerId() == player2.getPlayerId()).findAny().orElse(null);
-						}
-						
-						if(match.getSetup().getHomeTeamId() == player.getTeamId()) {
-							team = match.getSetup().getHomeTeam();
-						} else if(match.getSetup().getAwayTeamId() == player.getTeamId()) {
-							team = match.getSetup().getAwayTeam();
-						}
-						if(valueToProcess.split(",")[2].equalsIgnoreCase("ISPL S1") || valueToProcess.split(",")[2].equalsIgnoreCase("ISPL S2")) {
-							statsType = cricketService.getAllStatsType().stream().filter(stype -> stype.getStats_short_name().equalsIgnoreCase(valueToProcess.split(",")[2])).findAny().orElse(null);
-							statsType2 = cricketService.getAllStatsType().stream().filter(stype -> stype.getStats_short_name().equalsIgnoreCase(valueToProcess.split(",")[2])).findAny().orElse(null);
-							if(statsType == null) {
-								return "PopulateL3rdPlayerProfile: Stats Type not found for profile [" + valueToProcess.split(",")[2] + "]";
-							}
-							stat = cricketService.getAllStats().stream().filter(st -> st.getPlayer_id() == player.getPlayerId() && statsType.getStats_id() == st.getStats_type_id()).findAny().orElse(null);
-							if(stat == null) {
-								return "populatePlayerProfile: No stats found for player id [" + player.getFull_name() + "] from database is returning NULL";
-							}
-							stat.setStats_type(statsType);
-							
-							//for player2
-							if(statsType2 == null) {
-								return "PopulateL3rdPlayerProfile: Stats Type not found for profile [" + valueToProcess.split(",")[2] + "]";
-							}
-							stat2 = cricketService.getAllStats().stream().filter(st -> st.getPlayer_id() == player2.getPlayerId() && statsType2.getStats_id() == st.getStats_type_id()).findAny().orElse(null);
-							if(stat2 == null) {
-								return "populatePlayerProfile: No stats found for player id [" + player2.getFull_name() + "] from database is returning NULL";
-							}
-							stat2.setStats_type(statsType2);
-						}
-						if(valueToProcess.split(",")[2].equalsIgnoreCase("ISPL_CAREER")) {
-							statsType = new StatsType();
-							stat = new Statistics();
-							
-							Statistics statS1 = CricketFunctions.getStatsByType(Integer.valueOf(valueToProcess.split(",")[0]), "ISPL S1", cricketService.getAllStatsType(), cricketService.getAllStats());
-						    Statistics statS2 = CricketFunctions.getStatsByType(Integer.valueOf(valueToProcess.split(",")[0]), "ISPL S2", cricketService.getAllStatsType(), cricketService.getAllStats());
-						    
-						    if (statS1 == null && statS2 == null) {
-						        return "InfoBarPlayerProfile: Stats not found for Player Id [" + valueToProcess.split(",")[0] + "]";
-						    }
-						    stat = statS1 != null ? statS1 : statS2;
-						    stat = CricketFunctions.mergeIsplCareerStats(stat, statS2);
-							
-							statsType = cricketService.getAllStatsType().stream().filter(st -> st.getStats_short_name().equalsIgnoreCase("D10")).findAny().orElse(null);
-							stat.setStats_type(statsType);
-							
-							//System.out.println(stat.getMatches());
-							stat = CricketFunctions.updateTournamentWithH2h(stat, headToHead.getH2hPlayer(), match, CricketUtil.FULL);
-							stat = CricketFunctions.updateStatisticsWithMatchData(stat, match, CricketUtil.FULL);
-							
-							//2
-							statsType2 = new StatsType();
-							stat2 = new Statistics();
-							
-							Statistics statSE1 = CricketFunctions.getStatsByType(Integer.valueOf(valueToProcess.split(",")[1]), "ISPL S1", cricketService.getAllStatsType(), cricketService.getAllStats());
-						    Statistics statSE2 = CricketFunctions.getStatsByType(Integer.valueOf(valueToProcess.split(",")[1]), "ISPL S2", cricketService.getAllStatsType(), cricketService.getAllStats());
-						    
-						    if (statSE1 == null && statSE2 == null) {
-						        return "InfoBarPlayerProfile: Stats not found for Player Id [" + valueToProcess.split(",")[1] + "]";
-						    }
-						    stat2 = statSE1 != null ? statSE1 : statSE2;
-						    stat2 = CricketFunctions.mergeIsplCareerStats(stat2, statSE2);
-							
-							statsType2 = cricketService.getAllStatsType().stream().filter(st -> st.getStats_short_name().equalsIgnoreCase("D10")).findAny().orElse(null);
-							stat2.setStats_type(statsType2);
-							
-							//System.out.println(stat2.getMatches());
-							stat2 = CricketFunctions.updateTournamentWithH2h(stat2, headToHead.getH2hPlayer(), match, CricketUtil.FULL);
-							stat2 = CricketFunctions.updateStatisticsWithMatchData(stat2, match, CricketUtil.FULL);
-						}
-						
-						if(valueToProcess.split(",")[2].equalsIgnoreCase("THIS SERIES")) {
-							for(int i=0;i<=top_Batsman.size()-1;i++) {
-								if(top_Batsman.get(i).getPlayerId() == player.getPlayerId()) {
-									if(top_Batsman.get(i).getBestEquation() % 2 == 0) {
-										if(top_Batsman.get(i).getBestEquation() / 2  == 0) {
-											best = "-";
-										}else {
-											best = String.valueOf(top_Batsman.get(i).getBestEquation() /2);
-										}
-									}else {
-										best = (top_Batsman.get(i).getBestEquation()-1) / 2 + "*";
-									}
-									break;
-								}else {
-									best = "-";
-								}
-								
-								//2
-								if(top_Batsman.get(i).getPlayerId() == player2.getPlayerId()) {
-									if(top_Batsman.get(i).getBestEquation() % 2 == 0) {
-										if(top_Batsman.get(i).getBestEquation() / 2  == 0) {
-											best2 = "-";
-										}else {
-											best2 = String.valueOf(top_Batsman.get(i).getBestEquation() /2);
-										}
-									}else {
-										best2 = (top_Batsman.get(i).getBestEquation()-1) / 2 + "*";
-									}
-									break;
-								}else {
-									best2 = "-";
-								}
-							}
-						}else {
-							if(stat.getRuns_conceded() == 0 || stat.getWickets() == 0) {
-								Data = "-";
-							}else {
-								average = stat.getRuns_conceded()/stat.getWickets();
-								DecimalFormat df_bo = new DecimalFormat("0.00");
-								Data = df_bo.format(average);
-							}
-							if(stat.getFifties() == 0) {
-								fifty = "-";
-							}else {
-								fifty = String.valueOf(stat.getFifties());
-							}
-							
-							if(stat.getThirties() == 0) {
-								thirty = "-";
-							}else {
-								thirty = String.valueOf(stat.getThirties());
-							}
-							
-							if(stat.getHundreds() == 0) {
-								hundred = "-";
-							}else {
-								hundred = String.valueOf(stat.getHundreds());
-							}
-							
-							if(fifty.equalsIgnoreCase("-") && !hundred.equalsIgnoreCase("-")) {
-								fifty = "0";
-							}
-							
-							if(hundred.equalsIgnoreCase("-") && !fifty.equalsIgnoreCase("-")) {
-								hundred = "0";
-							}
-							
-							if(CricketFunctions.generateStrikeRate(stat.getRuns(), stat.getBalls_faced(), 1).trim().isEmpty()) {
-								strikeRate = "-";
-							}else {
-								strikeRate = String.valueOf(CricketFunctions.generateStrikeRate(stat.getRuns(), stat.getBalls_faced(), 0));
-							}
-							
-							if(stat.getRuns() == 0) {
-								runs = "-";
-							}else {
-								runs = String.format("%,d\n", stat.getRuns());
-							}
-							
-							if(CricketFunctions.getAverage(stat.getInnings(), stat.getNot_out(), stat.getRuns(), 2, "-").equalsIgnoreCase("0.00")) {
-								batAverage = "-";
-							}else {
-								batAverage = CricketFunctions.getAverage(stat.getInnings(), stat.getNot_out(), stat.getRuns(), 2, "-");
-							}
-							
-							if(player.getSurname() == null) {
-								surName = "";
-							}else {
-								surName = player.getSurname();
-							}
-							
-							if(stat.getBest_score().equalsIgnoreCase("0")) {
-								best = "-";
-							}else {
-								best = stat.getBest_score();
-							}
-							
-							//2
-							
-							if(stat2.getRuns_conceded() == 0 || stat2.getWickets() == 0) {
-								Data2 = "-";
-							}else {
-								average2 = stat2.getRuns_conceded()/stat2.getWickets();
-								DecimalFormat df_bo = new DecimalFormat("0.00");
-								Data2 = df_bo.format(average2);
-							}
-							
-							
-							if(CricketFunctions.generateStrikeRate(stat2.getRuns(), stat2.getBalls_faced(), 1).trim().isEmpty()) {
-								strikeRate2 = "-";
-							}else {
-								strikeRate2 = String.valueOf(CricketFunctions.generateStrikeRate(stat2.getRuns(), stat2.getBalls_faced(), 0));
-							}
-							
-							if(stat2.getRuns() == 0) {
-								runs2 = "-";
-							}else {
-								runs2 = String.format("%,d\n", stat2.getRuns());
-							}
-							
-							if(stat2.getBest_score().equalsIgnoreCase("0")) {
-								best2 = "-";
-							}else {
-								best2 = stat2.getBest_score();
-							}
-
-						}
-					}
-					
-				}
-				if(ply.getPlayerId() == Integer.valueOf(valueToProcess.split(",")[1])) {
-					if(ply.getDebut().equalsIgnoreCase("YES")) {
-						debut2 = "YES";
-					}else {
-						player = CricketFunctions.getPlayerFromMatchData(Integer.valueOf(valueToProcess.split(",")[0]), match);
-						player2 = CricketFunctions.getPlayerFromMatchData(Integer.valueOf(valueToProcess.split(",")[1]), match);
-						if(valueToProcess.split(",")[2].equalsIgnoreCase("ISPL_CAREER")) {
-							profile = "ISPL CAREER";
-						}else if(valueToProcess.split(",")[2].equalsIgnoreCase("ISPL S1")){
-							profile = "ISPL SEASON 1";
-						}else if(valueToProcess.split(",")[2].equalsIgnoreCase("ISPL S2")){
-							profile = "ISPL SEASON 2";
-						}else if(valueToProcess.split(",")[2].equalsIgnoreCase("THIS SERIES")){
-							profile = "ISPL SEASON 3";
-							PastDataToCrr = CricketFunctions.extractTournamentData("CURRENT_MATCH_DATA", false,  headToHead.getH2hPlayer(), cricketService, match, pasttornament);
-							
-							top_Batsman = new ArrayList<BestStats>();
-							for(Tournament tour: PastDataToCrr) {
-								for(BestStats bs:tour.getBatsman_best_Stats()) {
-									top_Batsman.add(bs);
-								}
-							}
-							
-							//System.out.println(PastDataToCrr.size());
-							Collections.sort(top_Batsman,new CricketFunctions.PlayerBestStatsComparator());
-							
-							tournament = PastDataToCrr.stream().filter(tour->tour.getPlayerId() == player.getPlayerId()).findAny().orElse(null);
-							tournament2 = PastDataToCrr.stream().filter(tour->tour.getPlayerId() == player2.getPlayerId()).findAny().orElse(null);
-						}
-						
-						if(match.getSetup().getHomeTeamId() == player.getTeamId()) {
-							team = match.getSetup().getHomeTeam();
-						} else if(match.getSetup().getAwayTeamId() == player.getTeamId()) {
-							team = match.getSetup().getAwayTeam();
-						}
-						if(valueToProcess.split(",")[2].equalsIgnoreCase("ISPL S1") || valueToProcess.split(",")[2].equalsIgnoreCase("ISPL S2")) {
-							statsType = cricketService.getAllStatsType().stream().filter(stype -> stype.getStats_short_name().equalsIgnoreCase(valueToProcess.split(",")[2])).findAny().orElse(null);
-							statsType2 = cricketService.getAllStatsType().stream().filter(stype -> stype.getStats_short_name().equalsIgnoreCase(valueToProcess.split(",")[2])).findAny().orElse(null);
-							if(statsType == null) {
-								return "PopulateL3rdPlayerProfile: Stats Type not found for profile [" + valueToProcess.split(",")[2] + "]";
-							}
-							stat = cricketService.getAllStats().stream().filter(st -> st.getPlayer_id() == player.getPlayerId() && statsType.getStats_id() == st.getStats_type_id()).findAny().orElse(null);
-							if(stat == null) {
-								return "populatePlayerProfile: No stats found for player id [" + player.getFull_name() + "] from database is returning NULL";
-							}
-							stat.setStats_type(statsType);
-							
-							//for player2
-							if(statsType2 == null) {
-								return "PopulateL3rdPlayerProfile: Stats Type not found for profile [" + valueToProcess.split(",")[2] + "]";
-							}
-							stat2 = cricketService.getAllStats().stream().filter(st -> st.getPlayer_id() == player2.getPlayerId() && statsType2.getStats_id() == st.getStats_type_id()).findAny().orElse(null);
-							if(stat2 == null) {
-								return "populatePlayerProfile: No stats found for player id [" + player2.getFull_name() + "] from database is returning NULL";
-							}
-							stat2.setStats_type(statsType2);
-						}
-						if(valueToProcess.split(",")[2].equalsIgnoreCase("ISPL_CAREER")) {
-							statsType = new StatsType();
-							stat = new Statistics();
-							
-							Statistics statS1 = CricketFunctions.getStatsByType(Integer.valueOf(valueToProcess.split(",")[0]), "ISPL S1", cricketService.getAllStatsType(), cricketService.getAllStats());
-						    Statistics statS2 = CricketFunctions.getStatsByType(Integer.valueOf(valueToProcess.split(",")[0]), "ISPL S2", cricketService.getAllStatsType(), cricketService.getAllStats());
-						    
-						    if (statS1 == null && statS2 == null) {
-						        return "InfoBarPlayerProfile: Stats not found for Player Id [" + valueToProcess.split(",")[0] + "]";
-						    }
-						    stat = statS1 != null ? statS1 : statS2;
-						    stat = CricketFunctions.mergeIsplCareerStats(stat, statS2);
-							
-							statsType = cricketService.getAllStatsType().stream().filter(st -> st.getStats_short_name().equalsIgnoreCase("D10")).findAny().orElse(null);
-							stat.setStats_type(statsType);
-							
-							//System.out.println(stat.getMatches());
-							stat = CricketFunctions.updateTournamentWithH2h(stat, headToHead.getH2hPlayer(), match, CricketUtil.FULL);
-							stat = CricketFunctions.updateStatisticsWithMatchData(stat, match, CricketUtil.FULL);
-							
-							//2
-							statsType2 = new StatsType();
-							stat2 = new Statistics();
-							
-							Statistics statSE1 = CricketFunctions.getStatsByType(Integer.valueOf(valueToProcess.split(",")[1]), "ISPL S1", cricketService.getAllStatsType(), cricketService.getAllStats());
-						    Statistics statSE2 = CricketFunctions.getStatsByType(Integer.valueOf(valueToProcess.split(",")[1]), "ISPL S2", cricketService.getAllStatsType(), cricketService.getAllStats());
-						    
-						    if (statSE1 == null && statSE2 == null) {
-						        return "InfoBarPlayerProfile: Stats not found for Player Id [" + valueToProcess.split(",")[1] + "]";
-						    }
-						    stat2 = statSE1 != null ? statSE1 : statSE2;
-						    stat2 = CricketFunctions.mergeIsplCareerStats(stat2, statSE2);
-							
-							statsType2 = cricketService.getAllStatsType().stream().filter(st -> st.getStats_short_name().equalsIgnoreCase("D10")).findAny().orElse(null);
-							stat2.setStats_type(statsType2);
-							
-							//System.out.println(stat2.getMatches());
-							stat2 = CricketFunctions.updateTournamentWithH2h(stat2, headToHead.getH2hPlayer(), match, CricketUtil.FULL);
-							stat2 = CricketFunctions.updateStatisticsWithMatchData(stat2, match, CricketUtil.FULL);
-						}
-						
-						if(valueToProcess.split(",")[2].equalsIgnoreCase("THIS SERIES")) {
-							for(int i=0;i<=top_Batsman.size()-1;i++) {
-								if(top_Batsman.get(i).getPlayerId() == player.getPlayerId()) {
-									if(top_Batsman.get(i).getBestEquation() % 2 == 0) {
-										if(top_Batsman.get(i).getBestEquation() / 2  == 0) {
-											best = "-";
-										}else {
-											best = String.valueOf(top_Batsman.get(i).getBestEquation() /2);
-										}
-									}else {
-										best = (top_Batsman.get(i).getBestEquation()-1) / 2 + "*";
-									}
-									break;
-								}else {
-									best = "-";
-								}
-								
-								//2
-								if(top_Batsman.get(i).getPlayerId() == player2.getPlayerId()) {
-									if(top_Batsman.get(i).getBestEquation() % 2 == 0) {
-										if(top_Batsman.get(i).getBestEquation() / 2  == 0) {
-											best2 = "-";
-										}else {
-											best2 = String.valueOf(top_Batsman.get(i).getBestEquation() /2);
-										}
-									}else {
-										best2 = (top_Batsman.get(i).getBestEquation()-1) / 2 + "*";
-									}
-									break;
-								}else {
-									best2 = "-";
-								}
-							}
-						}else {
-							if(stat.getRuns_conceded() == 0 || stat.getWickets() == 0) {
-								Data = "-";
-							}else {
-								average = stat.getRuns_conceded()/stat.getWickets();
-								DecimalFormat df_bo = new DecimalFormat("0.00");
-								Data = df_bo.format(average);
-							}
-							if(stat.getFifties() == 0) {
-								fifty = "-";
-							}else {
-								fifty = String.valueOf(stat.getFifties());
-							}
-							
-							if(stat.getThirties() == 0) {
-								thirty = "-";
-							}else {
-								thirty = String.valueOf(stat.getThirties());
-							}
-							
-							if(stat.getHundreds() == 0) {
-								hundred = "-";
-							}else {
-								hundred = String.valueOf(stat.getHundreds());
-							}
-							
-							if(fifty.equalsIgnoreCase("-") && !hundred.equalsIgnoreCase("-")) {
-								fifty = "0";
-							}
-							
-							if(hundred.equalsIgnoreCase("-") && !fifty.equalsIgnoreCase("-")) {
-								hundred = "0";
-							}
-							
-							if(CricketFunctions.generateStrikeRate(stat.getRuns(), stat.getBalls_faced(), 1).trim().isEmpty()) {
-								strikeRate = "-";
-							}else {
-								strikeRate = String.valueOf(CricketFunctions.generateStrikeRate(stat.getRuns(), stat.getBalls_faced(), 0));
-							}
-							
-							if(stat.getRuns() == 0) {
-								runs = "-";
-							}else {
-								runs = String.format("%,d\n", stat.getRuns());
-							}
-							
-							if(CricketFunctions.getAverage(stat.getInnings(), stat.getNot_out(), stat.getRuns(), 2, "-").equalsIgnoreCase("0.00")) {
-								batAverage = "-";
-							}else {
-								batAverage = CricketFunctions.getAverage(stat.getInnings(), stat.getNot_out(), stat.getRuns(), 2, "-");
-							}
-							
-							if(player.getSurname() == null) {
-								surName = "";
-							}else {
-								surName = player.getSurname();
-							}
-							
-							if(stat.getBest_score().equalsIgnoreCase("0")) {
-								best = "-";
-							}else {
-								best = stat.getBest_score();
-							}
-							
-							//2
-							if(stat2.getRuns_conceded() == 0 || stat2.getWickets() == 0) {
-								Data2 = "-";
-							}else {
-								average2 = stat2.getRuns_conceded()/stat2.getWickets();
-								DecimalFormat df_bo = new DecimalFormat("0.00");
-								Data2 = df_bo.format(average2);
-							}
-							
-							
-							if(CricketFunctions.generateStrikeRate(stat2.getRuns(), stat2.getBalls_faced(), 1).trim().isEmpty()) {
-								strikeRate2 = "-";
-							}else {
-								strikeRate2 = String.valueOf(CricketFunctions.generateStrikeRate(stat2.getRuns(), stat2.getBalls_faced(), 0));
-							}
-							
-							if(stat2.getRuns() == 0) {
-								runs2 = "-";
-							}else {
-								runs2 = String.format("%,d\n", stat2.getRuns());
-							}
-							
-							if(stat2.getBest_score().equalsIgnoreCase("0")) {
-								best2 = "-";
-							}else {
-								best2 = stat2.getBest_score();
-							}
-
-						}
-					}
-				}
-			}
-			if(valueToProcess.split(",")[3].equalsIgnoreCase("AR")) {
-				DoadWriteToTrio(print_writer, "read_template OpenerProfile");
-			}else {
-				DoadWriteToTrio(print_writer, "read_template OpenerProfile_Drone");
-			}
 			
-			populateOpenerProfile(print_writer, match,Integer.valueOf(valueToProcess.split(",")[5]));
-			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[4]);
-			break;
+//		case "POPULATE_GRAPHICS_OPENERBATPROFILE":
+//			//System.out.println("whattoprocess" + valueToProcess);
+//			debut1 ="NO";
+//			debut2 ="NO";
+//			for(Player ply: cricketService.getAllPlayer()) {
+//				if(ply.getPlayerId() == Integer.valueOf(valueToProcess.split(",")[0])) {
+//					if(ply.getDebut().equalsIgnoreCase("YES")) {
+//						debut1 = "YES";
+//						
+//					}else {
+//						player = CricketFunctions.getPlayerFromMatchData(Integer.valueOf(valueToProcess.split(",")[0]), match);
+//						player2 = CricketFunctions.getPlayerFromMatchData(Integer.valueOf(valueToProcess.split(",")[1]), match);
+//						if(valueToProcess.split(",")[2].equalsIgnoreCase("ISPL_CAREER")) {
+//							profile = "ISPL CAREER";
+//						}else if(valueToProcess.split(",")[2].equalsIgnoreCase("ISPL S1")){
+//							profile = "ISPL SEASON 1";
+//						}else if(valueToProcess.split(",")[2].equalsIgnoreCase("ISPL S2")){
+//							profile = "ISPL SEASON 2";
+//						}else if(valueToProcess.split(",")[2].equalsIgnoreCase("THIS SERIES")){
+//							profile = "ISPL SEASON 3";
+//							PastDataToCrr = CricketFunctions.extractTournamentData("CURRENT_MATCH_DATA", false,  headToHead.getH2hPlayer(), cricketService, match, pasttornament);
+//							
+//							top_Batsman = new ArrayList<BestStats>();
+//							for(Tournament tour: PastDataToCrr) {
+//								for(BestStats bs:tour.getBatsman_best_Stats()) {
+//									top_Batsman.add(bs);
+//								}
+//							}
+//							
+//							//System.out.println(PastDataToCrr.size());
+//							Collections.sort(top_Batsman,new CricketFunctions.PlayerBestStatsComparator());
+//							
+//							tournament = PastDataToCrr.stream().filter(tour->tour.getPlayerId() == player.getPlayerId()).findAny().orElse(null);
+//							tournament2 = PastDataToCrr.stream().filter(tour->tour.getPlayerId() == player2.getPlayerId()).findAny().orElse(null);
+//						}
+//						
+//						if(match.getSetup().getHomeTeamId() == player.getTeamId()) {
+//							team = match.getSetup().getHomeTeam();
+//						} else if(match.getSetup().getAwayTeamId() == player.getTeamId()) {
+//							team = match.getSetup().getAwayTeam();
+//						}
+//						if(valueToProcess.split(",")[2].equalsIgnoreCase("ISPL S1") || valueToProcess.split(",")[2].equalsIgnoreCase("ISPL S2")) {
+//							statsType = cricketService.getAllStatsType().stream().filter(stype -> stype.getStats_short_name().equalsIgnoreCase(valueToProcess.split(",")[2])).findAny().orElse(null);
+//							statsType2 = cricketService.getAllStatsType().stream().filter(stype -> stype.getStats_short_name().equalsIgnoreCase(valueToProcess.split(",")[2])).findAny().orElse(null);
+//							if(statsType == null) {
+//								return "PopulateL3rdPlayerProfile: Stats Type not found for profile [" + valueToProcess.split(",")[2] + "]";
+//							}
+//							stat = cricketService.getAllStats().stream().filter(st -> st.getPlayer_id() == player.getPlayerId() && statsType.getStats_id() == st.getStats_type_id()).findAny().orElse(null);
+//							if(stat == null) {
+//								return "populatePlayerProfile: No stats found for player id [" + player.getFull_name() + "] from database is returning NULL";
+//							}
+//							stat.setStats_type(statsType);
+//							
+//							//for player2
+//							if(statsType2 == null) {
+//								return "PopulateL3rdPlayerProfile: Stats Type not found for profile [" + valueToProcess.split(",")[2] + "]";
+//							}
+//							stat2 = cricketService.getAllStats().stream().filter(st -> st.getPlayer_id() == player2.getPlayerId() && statsType2.getStats_id() == st.getStats_type_id()).findAny().orElse(null);
+//							if(stat2 == null) {
+//								return "populatePlayerProfile: No stats found for player id [" + player2.getFull_name() + "] from database is returning NULL";
+//							}
+//							stat2.setStats_type(statsType2);
+//						}
+//						if(valueToProcess.split(",")[2].equalsIgnoreCase("ISPL_CAREER")) {
+//							statsType = new StatsType();
+//							stat = new Statistics();
+//							
+//							Statistics statS1 = CricketFunctions.getStatsByType(Integer.valueOf(valueToProcess.split(",")[0]), "ISPL S1", cricketService.getAllStatsType(), cricketService.getAllStats());
+//						    Statistics statS2 = CricketFunctions.getStatsByType(Integer.valueOf(valueToProcess.split(",")[0]), "ISPL S2", cricketService.getAllStatsType(), cricketService.getAllStats());
+//						    
+//						    if (statS1 == null && statS2 == null) {
+//						        return "InfoBarPlayerProfile: Stats not found for Player Id [" + valueToProcess.split(",")[0] + "]";
+//						    }
+//						    stat = statS1 != null ? statS1 : statS2;
+//						    stat = CricketFunctions.mergeIsplCareerStats(stat, statS2);
+//							
+//							statsType = cricketService.getAllStatsType().stream().filter(st -> st.getStats_short_name().equalsIgnoreCase("D10")).findAny().orElse(null);
+//							stat.setStats_type(statsType);
+//							
+//							//System.out.println(stat.getMatches());
+//							stat = CricketFunctions.updateTournamentWithH2h(stat, headToHead.getH2hPlayer(), match, CricketUtil.FULL);
+//							stat = CricketFunctions.updateStatisticsWithMatchData(stat, match, CricketUtil.FULL);
+//							
+//							//2
+//							statsType2 = new StatsType();
+//							stat2 = new Statistics();
+//							
+//							Statistics statSE1 = CricketFunctions.getStatsByType(Integer.valueOf(valueToProcess.split(",")[1]), "ISPL S1", cricketService.getAllStatsType(), cricketService.getAllStats());
+//						    Statistics statSE2 = CricketFunctions.getStatsByType(Integer.valueOf(valueToProcess.split(",")[1]), "ISPL S2", cricketService.getAllStatsType(), cricketService.getAllStats());
+//						    
+//						    if (statSE1 == null && statSE2 == null) {
+//						        return "InfoBarPlayerProfile: Stats not found for Player Id [" + valueToProcess.split(",")[1] + "]";
+//						    }
+//						    stat2 = statSE1 != null ? statSE1 : statSE2;
+//						    stat2 = CricketFunctions.mergeIsplCareerStats(stat2, statSE2);
+//							
+//							statsType2 = cricketService.getAllStatsType().stream().filter(st -> st.getStats_short_name().equalsIgnoreCase("D10")).findAny().orElse(null);
+//							stat2.setStats_type(statsType2);
+//							
+//							//System.out.println(stat2.getMatches());
+//							stat2 = CricketFunctions.updateTournamentWithH2h(stat2, headToHead.getH2hPlayer(), match, CricketUtil.FULL);
+//							stat2 = CricketFunctions.updateStatisticsWithMatchData(stat2, match, CricketUtil.FULL);
+//						}
+//						
+//						if(valueToProcess.split(",")[2].equalsIgnoreCase("THIS SERIES")) {
+//							for(int i=0;i<=top_Batsman.size()-1;i++) {
+//								if(top_Batsman.get(i).getPlayerId() == player.getPlayerId()) {
+//									if(top_Batsman.get(i).getBestEquation() % 2 == 0) {
+//										if(top_Batsman.get(i).getBestEquation() / 2  == 0) {
+//											best = "-";
+//										}else {
+//											best = String.valueOf(top_Batsman.get(i).getBestEquation() /2);
+//										}
+//									}else {
+//										best = (top_Batsman.get(i).getBestEquation()-1) / 2 + "*";
+//									}
+//									break;
+//								}else {
+//									best = "-";
+//								}
+//								
+//								//2
+//								if(top_Batsman.get(i).getPlayerId() == player2.getPlayerId()) {
+//									if(top_Batsman.get(i).getBestEquation() % 2 == 0) {
+//										if(top_Batsman.get(i).getBestEquation() / 2  == 0) {
+//											best2 = "-";
+//										}else {
+//											best2 = String.valueOf(top_Batsman.get(i).getBestEquation() /2);
+//										}
+//									}else {
+//										best2 = (top_Batsman.get(i).getBestEquation()-1) / 2 + "*";
+//									}
+//									break;
+//								}else {
+//									best2 = "-";
+//								}
+//							}
+//						}else {
+//							if(stat.getRuns_conceded() == 0 || stat.getWickets() == 0) {
+//								Data = "-";
+//							}else {
+//								average = stat.getRuns_conceded()/stat.getWickets();
+//								DecimalFormat df_bo = new DecimalFormat("0.00");
+//								Data = df_bo.format(average);
+//							}
+//							if(stat.getFifties() == 0) {
+//								fifty = "-";
+//							}else {
+//								fifty = String.valueOf(stat.getFifties());
+//							}
+//							
+//							if(stat.getThirties() == 0) {
+//								thirty = "-";
+//							}else {
+//								thirty = String.valueOf(stat.getThirties());
+//							}
+//							
+//							if(stat.getHundreds() == 0) {
+//								hundred = "-";
+//							}else {
+//								hundred = String.valueOf(stat.getHundreds());
+//							}
+//							
+//							if(fifty.equalsIgnoreCase("-") && !hundred.equalsIgnoreCase("-")) {
+//								fifty = "0";
+//							}
+//							
+//							if(hundred.equalsIgnoreCase("-") && !fifty.equalsIgnoreCase("-")) {
+//								hundred = "0";
+//							}
+//							
+//							if(CricketFunctions.generateStrikeRate(stat.getRuns(), stat.getBalls_faced(), 1).trim().isEmpty()) {
+//								strikeRate = "-";
+//							}else {
+//								strikeRate = String.valueOf(CricketFunctions.generateStrikeRate(stat.getRuns(), stat.getBalls_faced(), 0));
+//							}
+//							
+//							if(stat.getRuns() == 0) {
+//								runs = "-";
+//							}else {
+//								runs = String.format("%,d\n", stat.getRuns());
+//							}
+//							
+//							if(CricketFunctions.getAverage(stat.getInnings(), stat.getNot_out(), stat.getRuns(), 2, "-").equalsIgnoreCase("0.00")) {
+//								batAverage = "-";
+//							}else {
+//								batAverage = CricketFunctions.getAverage(stat.getInnings(), stat.getNot_out(), stat.getRuns(), 2, "-");
+//							}
+//							
+//							if(player.getSurname() == null) {
+//								surName = "";
+//							}else {
+//								surName = player.getSurname();
+//							}
+//							
+//							if(stat.getBest_score().equalsIgnoreCase("0")) {
+//								best = "-";
+//							}else {
+//								best = stat.getBest_score();
+//							}
+//							
+//							//2
+//							
+//							if(stat2.getRuns_conceded() == 0 || stat2.getWickets() == 0) {
+//								Data2 = "-";
+//							}else {
+//								average2 = stat2.getRuns_conceded()/stat2.getWickets();
+//								DecimalFormat df_bo = new DecimalFormat("0.00");
+//								Data2 = df_bo.format(average2);
+//							}
+//							
+//							
+//							if(CricketFunctions.generateStrikeRate(stat2.getRuns(), stat2.getBalls_faced(), 1).trim().isEmpty()) {
+//								strikeRate2 = "-";
+//							}else {
+//								strikeRate2 = String.valueOf(CricketFunctions.generateStrikeRate(stat2.getRuns(), stat2.getBalls_faced(), 0));
+//							}
+//							
+//							if(stat2.getRuns() == 0) {
+//								runs2 = "-";
+//							}else {
+//								runs2 = String.format("%,d\n", stat2.getRuns());
+//							}
+//							
+//							if(stat2.getBest_score().equalsIgnoreCase("0")) {
+//								best2 = "-";
+//							}else {
+//								best2 = stat2.getBest_score();
+//							}
+//
+//						}
+//					}
+//					
+//				}
+//				if(ply.getPlayerId() == Integer.valueOf(valueToProcess.split(",")[1])) {
+//					if(ply.getDebut().equalsIgnoreCase("YES")) {
+//						debut2 = "YES";
+//					}else {
+//						player = CricketFunctions.getPlayerFromMatchData(Integer.valueOf(valueToProcess.split(",")[0]), match);
+//						player2 = CricketFunctions.getPlayerFromMatchData(Integer.valueOf(valueToProcess.split(",")[1]), match);
+//						if(valueToProcess.split(",")[2].equalsIgnoreCase("ISPL_CAREER")) {
+//							profile = "ISPL CAREER";
+//						}else if(valueToProcess.split(",")[2].equalsIgnoreCase("ISPL S1")){
+//							profile = "ISPL SEASON 1";
+//						}else if(valueToProcess.split(",")[2].equalsIgnoreCase("ISPL S2")){
+//							profile = "ISPL SEASON 2";
+//						}else if(valueToProcess.split(",")[2].equalsIgnoreCase("THIS SERIES")){
+//							profile = "ISPL SEASON 3";
+//							PastDataToCrr = CricketFunctions.extractTournamentData("CURRENT_MATCH_DATA", false,  headToHead.getH2hPlayer(), cricketService, match, pasttornament);
+//							
+//							top_Batsman = new ArrayList<BestStats>();
+//							for(Tournament tour: PastDataToCrr) {
+//								for(BestStats bs:tour.getBatsman_best_Stats()) {
+//									top_Batsman.add(bs);
+//								}
+//							}
+//							
+//							//System.out.println(PastDataToCrr.size());
+//							Collections.sort(top_Batsman,new CricketFunctions.PlayerBestStatsComparator());
+//							
+//							tournament = PastDataToCrr.stream().filter(tour->tour.getPlayerId() == player.getPlayerId()).findAny().orElse(null);
+//							tournament2 = PastDataToCrr.stream().filter(tour->tour.getPlayerId() == player2.getPlayerId()).findAny().orElse(null);
+//						}
+//						
+//						if(match.getSetup().getHomeTeamId() == player.getTeamId()) {
+//							team = match.getSetup().getHomeTeam();
+//						} else if(match.getSetup().getAwayTeamId() == player.getTeamId()) {
+//							team = match.getSetup().getAwayTeam();
+//						}
+//						if(valueToProcess.split(",")[2].equalsIgnoreCase("ISPL S1") || valueToProcess.split(",")[2].equalsIgnoreCase("ISPL S2")) {
+//							statsType = cricketService.getAllStatsType().stream().filter(stype -> stype.getStats_short_name().equalsIgnoreCase(valueToProcess.split(",")[2])).findAny().orElse(null);
+//							statsType2 = cricketService.getAllStatsType().stream().filter(stype -> stype.getStats_short_name().equalsIgnoreCase(valueToProcess.split(",")[2])).findAny().orElse(null);
+//							if(statsType == null) {
+//								return "PopulateL3rdPlayerProfile: Stats Type not found for profile [" + valueToProcess.split(",")[2] + "]";
+//							}
+//							stat = cricketService.getAllStats().stream().filter(st -> st.getPlayer_id() == player.getPlayerId() && statsType.getStats_id() == st.getStats_type_id()).findAny().orElse(null);
+//							if(stat == null) {
+//								return "populatePlayerProfile: No stats found for player id [" + player.getFull_name() + "] from database is returning NULL";
+//							}
+//							stat.setStats_type(statsType);
+//							
+//							//for player2
+//							if(statsType2 == null) {
+//								return "PopulateL3rdPlayerProfile: Stats Type not found for profile [" + valueToProcess.split(",")[2] + "]";
+//							}
+//							stat2 = cricketService.getAllStats().stream().filter(st -> st.getPlayer_id() == player2.getPlayerId() && statsType2.getStats_id() == st.getStats_type_id()).findAny().orElse(null);
+//							if(stat2 == null) {
+//								return "populatePlayerProfile: No stats found for player id [" + player2.getFull_name() + "] from database is returning NULL";
+//							}
+//							stat2.setStats_type(statsType2);
+//						}
+//						if(valueToProcess.split(",")[2].equalsIgnoreCase("ISPL_CAREER")) {
+//							statsType = new StatsType();
+//							stat = new Statistics();
+//							
+//							Statistics statS1 = CricketFunctions.getStatsByType(Integer.valueOf(valueToProcess.split(",")[0]), "ISPL S1", cricketService.getAllStatsType(), cricketService.getAllStats());
+//						    Statistics statS2 = CricketFunctions.getStatsByType(Integer.valueOf(valueToProcess.split(",")[0]), "ISPL S2", cricketService.getAllStatsType(), cricketService.getAllStats());
+//						    
+//						    if (statS1 == null && statS2 == null) {
+//						        return "InfoBarPlayerProfile: Stats not found for Player Id [" + valueToProcess.split(",")[0] + "]";
+//						    }
+//						    stat = statS1 != null ? statS1 : statS2;
+//						    stat = CricketFunctions.mergeIsplCareerStats(stat, statS2);
+//							
+//							statsType = cricketService.getAllStatsType().stream().filter(st -> st.getStats_short_name().equalsIgnoreCase("D10")).findAny().orElse(null);
+//							stat.setStats_type(statsType);
+//							
+//							//System.out.println(stat.getMatches());
+//							stat = CricketFunctions.updateTournamentWithH2h(stat, headToHead.getH2hPlayer(), match, CricketUtil.FULL);
+//							stat = CricketFunctions.updateStatisticsWithMatchData(stat, match, CricketUtil.FULL);
+//							
+//							//2
+//							statsType2 = new StatsType();
+//							stat2 = new Statistics();
+//							
+//							Statistics statSE1 = CricketFunctions.getStatsByType(Integer.valueOf(valueToProcess.split(",")[1]), "ISPL S1", cricketService.getAllStatsType(), cricketService.getAllStats());
+//						    Statistics statSE2 = CricketFunctions.getStatsByType(Integer.valueOf(valueToProcess.split(",")[1]), "ISPL S2", cricketService.getAllStatsType(), cricketService.getAllStats());
+//						    
+//						    if (statSE1 == null && statSE2 == null) {
+//						        return "InfoBarPlayerProfile: Stats not found for Player Id [" + valueToProcess.split(",")[1] + "]";
+//						    }
+//						    stat2 = statSE1 != null ? statSE1 : statSE2;
+//						    stat2 = CricketFunctions.mergeIsplCareerStats(stat2, statSE2);
+//							
+//							statsType2 = cricketService.getAllStatsType().stream().filter(st -> st.getStats_short_name().equalsIgnoreCase("D10")).findAny().orElse(null);
+//							stat2.setStats_type(statsType2);
+//							
+//							//System.out.println(stat2.getMatches());
+//							stat2 = CricketFunctions.updateTournamentWithH2h(stat2, headToHead.getH2hPlayer(), match, CricketUtil.FULL);
+//							stat2 = CricketFunctions.updateStatisticsWithMatchData(stat2, match, CricketUtil.FULL);
+//						}
+//						
+//						if(valueToProcess.split(",")[2].equalsIgnoreCase("THIS SERIES")) {
+//							for(int i=0;i<=top_Batsman.size()-1;i++) {
+//								if(top_Batsman.get(i).getPlayerId() == player.getPlayerId()) {
+//									if(top_Batsman.get(i).getBestEquation() % 2 == 0) {
+//										if(top_Batsman.get(i).getBestEquation() / 2  == 0) {
+//											best = "-";
+//										}else {
+//											best = String.valueOf(top_Batsman.get(i).getBestEquation() /2);
+//										}
+//									}else {
+//										best = (top_Batsman.get(i).getBestEquation()-1) / 2 + "*";
+//									}
+//									break;
+//								}else {
+//									best = "-";
+//								}
+//								
+//								//2
+//								if(top_Batsman.get(i).getPlayerId() == player2.getPlayerId()) {
+//									if(top_Batsman.get(i).getBestEquation() % 2 == 0) {
+//										if(top_Batsman.get(i).getBestEquation() / 2  == 0) {
+//											best2 = "-";
+//										}else {
+//											best2 = String.valueOf(top_Batsman.get(i).getBestEquation() /2);
+//										}
+//									}else {
+//										best2 = (top_Batsman.get(i).getBestEquation()-1) / 2 + "*";
+//									}
+//									break;
+//								}else {
+//									best2 = "-";
+//								}
+//							}
+//						}else {
+//							if(stat.getRuns_conceded() == 0 || stat.getWickets() == 0) {
+//								Data = "-";
+//							}else {
+//								average = stat.getRuns_conceded()/stat.getWickets();
+//								DecimalFormat df_bo = new DecimalFormat("0.00");
+//								Data = df_bo.format(average);
+//							}
+//							if(stat.getFifties() == 0) {
+//								fifty = "-";
+//							}else {
+//								fifty = String.valueOf(stat.getFifties());
+//							}
+//							
+//							if(stat.getThirties() == 0) {
+//								thirty = "-";
+//							}else {
+//								thirty = String.valueOf(stat.getThirties());
+//							}
+//							
+//							if(stat.getHundreds() == 0) {
+//								hundred = "-";
+//							}else {
+//								hundred = String.valueOf(stat.getHundreds());
+//							}
+//							
+//							if(fifty.equalsIgnoreCase("-") && !hundred.equalsIgnoreCase("-")) {
+//								fifty = "0";
+//							}
+//							
+//							if(hundred.equalsIgnoreCase("-") && !fifty.equalsIgnoreCase("-")) {
+//								hundred = "0";
+//							}
+//							
+//							if(CricketFunctions.generateStrikeRate(stat.getRuns(), stat.getBalls_faced(), 1).trim().isEmpty()) {
+//								strikeRate = "-";
+//							}else {
+//								strikeRate = String.valueOf(CricketFunctions.generateStrikeRate(stat.getRuns(), stat.getBalls_faced(), 0));
+//							}
+//							
+//							if(stat.getRuns() == 0) {
+//								runs = "-";
+//							}else {
+//								runs = String.format("%,d\n", stat.getRuns());
+//							}
+//							
+//							if(CricketFunctions.getAverage(stat.getInnings(), stat.getNot_out(), stat.getRuns(), 2, "-").equalsIgnoreCase("0.00")) {
+//								batAverage = "-";
+//							}else {
+//								batAverage = CricketFunctions.getAverage(stat.getInnings(), stat.getNot_out(), stat.getRuns(), 2, "-");
+//							}
+//							
+//							if(player.getSurname() == null) {
+//								surName = "";
+//							}else {
+//								surName = player.getSurname();
+//							}
+//							
+//							if(stat.getBest_score().equalsIgnoreCase("0")) {
+//								best = "-";
+//							}else {
+//								best = stat.getBest_score();
+//							}
+//							
+//							//2
+//							if(stat2.getRuns_conceded() == 0 || stat2.getWickets() == 0) {
+//								Data2 = "-";
+//							}else {
+//								average2 = stat2.getRuns_conceded()/stat2.getWickets();
+//								DecimalFormat df_bo = new DecimalFormat("0.00");
+//								Data2 = df_bo.format(average2);
+//							}
+//							
+//							
+//							if(CricketFunctions.generateStrikeRate(stat2.getRuns(), stat2.getBalls_faced(), 1).trim().isEmpty()) {
+//								strikeRate2 = "-";
+//							}else {
+//								strikeRate2 = String.valueOf(CricketFunctions.generateStrikeRate(stat2.getRuns(), stat2.getBalls_faced(), 0));
+//							}
+//							
+//							if(stat2.getRuns() == 0) {
+//								runs2 = "-";
+//							}else {
+//								runs2 = String.format("%,d\n", stat2.getRuns());
+//							}
+//							
+//							if(stat2.getBest_score().equalsIgnoreCase("0")) {
+//								best2 = "-";
+//							}else {
+//								best2 = stat2.getBest_score();
+//							}
+//
+//						}
+//					}
+//				}
+//			}
+//			if(valueToProcess.split(",")[3].equalsIgnoreCase("AR")) {
+//				DoadWriteToTrio(print_writer, "read_template OpenerProfile");
+//			}else {
+//				DoadWriteToTrio(print_writer, "read_template OpenerProfile_Drone");
+//			}
+//			
+//			populateOpenerProfile(print_writer, match,Integer.valueOf(valueToProcess.split(",")[5]));
+//			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[4]);
+//			break;
+			
+		case "POPULATE_GRAPHICS_OPENERBATPROFILE":
+		    player = CricketFunctions.getPlayerFromMatchData(Integer.valueOf(valueToProcess.split(",")[0]), match);
+		    player2 = CricketFunctions.getPlayerFromMatchData(Integer.valueOf(valueToProcess.split(",")[1]), match);
+
+		    if(match.getSetup().getHomeTeamId() == player.getTeamId()) {
+		        team = match.getSetup().getHomeTeam();
+		    } else if(match.getSetup().getAwayTeamId() == player.getTeamId()) {
+		        team = match.getSetup().getAwayTeam();
+		    }
+
+		    if(player.getSurname() == null) {
+		        surName = "";
+		    } else {
+		        surName = player.getSurname();
+		    }
+
+		    if(valueToProcess.split(",")[2].equalsIgnoreCase("AR")) {
+		        DoadWriteToTrio(print_writer, "read_template Opener");
+		    } else {
+		        DoadWriteToTrio(print_writer, "read_template OpenerProfile_Drone");
+		    }
+
+		    populateOpenerProfile(print_writer, match, Integer.valueOf(valueToProcess.split(",")[4]));
+		    DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[3]);
+		    break;	
 		case "POPULATE_GRAPHICS_DOUBLEBATPROFILE":
 			//System.out.println("Valuetoprocess" + valueToProcess);
 			//System.out.println("whattoprocess" + valueToProcess);
@@ -2097,9 +2000,10 @@ public class DOAD_TRIO extends Scene{
  	private void populateTarget(PrintWriter print_writer, MatchAllData match) {
  	    
  	    StringBuilder sb = new StringBuilder();
- 	    sb.append("tabfield:set_value_no_update 002-TARGET ").append(CricketFunctions.GetTargetData(match).getTargetRuns()).append(return_key).append(line_feed);
- 	    sb.append("tabfield:set_value_no_update 000-TeamRefName ").append(match.getMatch().getInning().get(1).getBatting_team().getTeamBadge()).append(return_key).append(line_feed);
- 	    sb.append("tabfield:set_value_no_update 001-TARGET-HEAD TARGET").append(return_key).append(line_feed);
+ 	    System.out.println("match.getMatch().getInning().get(1).getBatting_team().getTeamBadge()" +match.getMatch().getInning().get(1).getBatting_team().getTeamBadge());
+ 	    sb.append("tabfield:set_value_no_update 001-TARGET ").append(CricketFunctions.GetTargetData(match).getTargetRuns()).append(return_key).append(line_feed);
+ 	    sb.append("tabfield:set_value_no_update 001-TEAMNAME ").append(match.getMatch().getInning().get(1).getBatting_team().getTeamBadge()).append(return_key).append(line_feed);
+ 	    sb.append("tabfield:set_value_no_update 003-Header TARGET").append(return_key).append(line_feed);
 
  	    print_writer.print(sb.toString());
  	    print_writer.flush();
@@ -2127,7 +2031,7 @@ public class DOAD_TRIO extends Scene{
 				CricketFunctions.Plural(Integer.valueOf(this_data_str.get(this_data_str.size()-1).split("-")[1])).toUpperCase());
 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 005-DATA01 "+  Integer.valueOf(this_data_str.get(this_data_str.size()-1).split("-")[1]));
  	}
-private void populateProjected(PrintWriter print_writer,MatchAllData match) {
+ 	private void populateProjected(PrintWriter print_writer,MatchAllData match) {
  		
  		String[] proj_score_rate = new String[CricketFunctions.projectedScore(match).size()];
 	    for (int i = 0; i < CricketFunctions.projectedScore(match).size(); i++) {
@@ -2141,22 +2045,23 @@ private void populateProjected(PrintWriter print_writer,MatchAllData match) {
 				
 				
 				//team name 
-		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 100-TeamRefName "+  inn.getBatting_team().getTeamBadge());
+		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME "+  inn.getBatting_team().getTeamBadge());
 		 		
 		 		
-		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 201-HEAD "+ " @CRR (" +  proj_score_rate[0] + ")");
+		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 106-CURR "+ " @CRR (" +  proj_score_rate[0] + ")");
 		 		
-		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 202-RUNS "+ proj_score_rate[1]);
+		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 105-RUNS03 "+ proj_score_rate[1]);
 		 		
-		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 301-HEAD "+ " @ " + proj_score_rate[2] + " RPO");
+		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 102-RR01 "+ " @ " + proj_score_rate[2] + " RPO");
 		 		
-		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 302-RUNS "+ proj_score_rate[3]);
+		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-RUNS01 "+ proj_score_rate[3]);
 		 		
-		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 401-HEAD "+ " @ " + proj_score_rate[4] + " RPO");
+		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 104-RR02 "+ " @ " + proj_score_rate[4] + " RPO");
 		 		
-		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 402-RUNS "+ proj_score_rate[5]);
 		 		
-		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 003-HEADER "+  "PROJECTED SCORES");
+		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 103-Runs02 "+ proj_score_rate[5]);
+		 		
+		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 003-Header "+  "PROJECTED SCORES");
 		 		
 			}
  		}
@@ -2252,10 +2157,15 @@ private void populateProjected(PrintWriter print_writer,MatchAllData match) {
  	private void populateMatchID(PrintWriter print_writer,MatchAllData match,CricketService cricketService) {
  		
  		
- 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update  000-MATCH-NUMBER "+  match.getSetup().getMatchIdent());
+ 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update  004-LOCATION "+  "LIVE FROM WANKHEDE STADIUM");
+ 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update  003-MATCH-NUMBER "+  match.getSetup().getMatchIdent());
  		
- 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAM-REF-NAME-1 "+  match.getSetup().getHomeTeam().getTeamBadge());
- 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-TEAM-REF-NAME-2 "+  match.getSetup().getAwayTeam().getTeamBadge());
+ 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME "+  match.getSetup().getHomeTeam().getTeamBadge());
+ 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-TEAMNAME "+  match.getSetup().getAwayTeam().getTeamBadge());
+ 		
+ 		
+ 	//	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME "+  match.getSetup().getHomeTeam().getTeamBadge());
+ 	//	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-TEAMNAME "+  match.getSetup().getAwayTeam().getTeamBadge());
 
  	}
  	
@@ -2607,132 +2517,152 @@ private void populateProjected(PrintWriter print_writer,MatchAllData match) {
     private void populateEquation(PrintWriter print_writer,MatchAllData match,HeadToHead headToHeads) {
  		
  		
- 	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-TeamRefName "+  match.getMatch().getInning().get(1).getBatting_team().getTeamBadge());
+ 	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME "+  match.getMatch().getInning().get(1).getBatting_team().getTeamBadge());
 
  		//run
- 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-DATA01 "+ CricketFunctions.GetTargetData(match).getRemaningRuns());
+ 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-RUNS "+ CricketFunctions.GetTargetData(match).getRemaningRuns());
  		
- 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 006-DATA02 BALL"+ CricketFunctions.Plural(CricketFunctions.GetTargetData(match).getRemaningBall()).toUpperCase());
+ 	//	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 006-DATA02 BALL"+ CricketFunctions.Plural(CricketFunctions.GetTargetData(match).getRemaningBall()).toUpperCase());
  		
  		//balls
- 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 005-DATA01 "+  CricketFunctions.GetTargetData(match).getRemaningBall());
- 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 003-DATA02 RUN"+ CricketFunctions.Plural(CricketFunctions.GetTargetData(match).getRemaningRuns()).toUpperCase());
+ 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 102-BALLS "+  CricketFunctions.GetTargetData(match).getRemaningBall());
+ //		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 003-DATA02 RUN"+ CricketFunctions.Plural(CricketFunctions.GetTargetData(match).getRemaningRuns()).toUpperCase());
  	}
+    
+//    private void populateOpenerProfile(PrintWriter print_writer,MatchAllData match,int inn) throws InterruptedException {
+// 		
+//	 
+//	 
+//	 if(debut1.equalsIgnoreCase("YES") && debut2.equalsIgnoreCase("YES")) {
+//		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 500-SELECT-DATA-TYPE 0");
+//		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-HEAD ");
+//		 TimeUnit.MILLISECONDS.sleep(500);
+//	 }else if(debut1.equalsIgnoreCase("YES") && debut2.equalsIgnoreCase("NO")) {
+//		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 500-SELECT-DATA-TYPE 1");
+//		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-HEAD "+ profile );
+//		 if(profile.equalsIgnoreCase("ISPL SEASON 3")) {
+//	 	 		
+//	 	 	 	//2
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 0 " +  (tournament2.getMatches() != 0?String.valueOf(tournament2.getMatches()):"-"));
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 1 " +  (tournament2.getRuns() != 0?String.valueOf(tournament2.getRuns()):"-"));
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 2 " +  CricketFunctions.generateStrikeRate(tournament2.getRuns(), tournament2.getBallsFaced(), 0));
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 3 " +  best2);
+//	 	 	 	TimeUnit.MILLISECONDS.sleep(500);
+//	 	 	}else {
+//	 	 		
+//	 	 	 	//2
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 0 " +  stat2.getMatches());
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 1 " +  runs2);
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 2 " +  strikeRate2);
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 3 " +  best2);
+//	 	 	 	TimeUnit.MILLISECONDS.sleep(500);
+//	 	 	}
+//	 }else if(debut1.equalsIgnoreCase("NO") && debut2.equalsIgnoreCase("YES")) {
+//		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 500-SELECT-DATA-TYPE 2");
+//		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-HEAD "+ profile );
+//		 TimeUnit.MILLISECONDS.sleep(500);
+//		 
+//		 if(profile.equalsIgnoreCase("ISPL SEASON 3")) {
+//	 	 		//System.out.println("Coming inside");
+//	 	 		DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 0 " +  (tournament.getMatches() != 0?String.valueOf(tournament.getMatches()):"-"));
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 1 " +  (tournament.getRuns() != 0?String.valueOf(tournament.getRuns()):"-"));
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 2 " +  CricketFunctions.generateStrikeRate(tournament.getRuns(), tournament.getBallsFaced(), 0));
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 3 " +  best);
+//	 	 	 	TimeUnit.MILLISECONDS.sleep(500);
+//	 	 	 	
+//	 	 	}else {
+//	 	 		DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 0 " +  stat.getMatches());
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 1 " +  runs);
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 2 " +  strikeRate);
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 3 " +  best);
+//	 	 	 	TimeUnit.MILLISECONDS.sleep(500);
+//	 	 	 	
+//	 	 	}
+//	 }else {
+//		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 500-SELECT-DATA-TYPE 3");
+//		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-HEAD "+ profile );
+//		 if(profile.equalsIgnoreCase("ISPL SEASON 3")) {
+//	 	 		//System.out.println("Coming inside");
+//	 	 		DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 0 " +  (tournament.getMatches() != 0?String.valueOf(tournament.getMatches()):"-"));
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 1 " +  (tournament.getRuns() != 0?String.valueOf(tournament.getRuns()):"-"));
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 2 " +  CricketFunctions.generateStrikeRate(tournament.getRuns(), tournament.getBallsFaced(), 0));
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 3 " +  best);
+//	 	 	 	
+//	 	 	 	//2
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 0 " +  (tournament2.getMatches() != 0?String.valueOf(tournament2.getMatches()):"-"));
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 1 " +  (tournament2.getRuns() != 0?String.valueOf(tournament2.getRuns()):"-"));
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 2 " +  CricketFunctions.generateStrikeRate(tournament2.getRuns(), tournament2.getBallsFaced(), 0));
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 3 " +  best2);
+//	 	 	 	TimeUnit.MILLISECONDS.sleep(500);
+//	 	 	}else {
+//	 	 		DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 0 " +  stat.getMatches());
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 1 " +  runs);
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 2 " +  strikeRate);
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 3 " +  best);
+//	 	 	 	
+//	 	 	 	//2
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 0 " +  stat2.getMatches());
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 1 " +  runs2);
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 2 " +  strikeRate2);
+//	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 3 " +  best2);
+//	 	 	 	TimeUnit.MILLISECONDS.sleep(500);
+//	 	 	}
+//	 }
+// 	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 302-NAME "+  player.getTicker_name());
+// 	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 301-IMAGE "+ "C:\\\\Images\\\\ISPL\\\\PHOTOS\\"
+//    			+ team.getTeamName4()+ "\\\\STRAIGHT_1024\\\\" +player.getPhoto()+ CricketUtil.PNG_EXTENSION);
+// 	 	//2
+// 	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 402_NAME "+  player2.getTicker_name());
+// 	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 401-IMAGE "+ "C:\\\\Images\\\\ISPL\\\\PHOTOS\\"
+//    			+ team.getTeamName4()+ "\\\\STRAIGHT_1024\\\\" +player2.getPhoto()+ CricketUtil.PNG_EXTENSION);
+// 	 	
+// 	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-TeamRefName " + team.getTeamBadge() );
+// 		//head
+// 	 	
+// 	 	TimeUnit.MILLISECONDS.sleep(500);
+// 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATHEAD 0" +  " MTS");
+// 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATHEAD 1" +  " RUNS");
+// 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATHEAD 2" +  " SR");
+// 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATHEAD 3" +  " BEST");
+// 	 	
+// 	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 503-SELECT-IMPACT 0");
+// 	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 504-SELECT-IMPACT 0");
+// 	 	
+//		if(!CricketFunctions.checkBatAndBallImpactInOutPlayerISPL(match.getEventFile().getEvents(), inn, player.getPlayerId()).isEmpty()) {
+//			switch(CricketFunctions.checkBatAndBallImpactInOutPlayerISPL(match.getEventFile().getEvents(), inn ,player.getPlayerId())) {
+//			case "IMP_IN":
+//				DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 503-SELECT-IMPACT 1");
+//				break;
+//			}
+//		}
+//		if(!CricketFunctions.checkBatAndBallImpactInOutPlayerISPL(match.getEventFile().getEvents(), inn, player2.getPlayerId()).isEmpty()) {
+//			switch(CricketFunctions.checkBatAndBallImpactInOutPlayerISPL(match.getEventFile().getEvents(), inn ,player2.getPlayerId())) {
+//			case "IMP_IN":
+//				DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 504-SELECT-IMPACT 1");
+//				break;
+//			}
+//		}
+// 	}
+    
     
     private void populateOpenerProfile(PrintWriter print_writer,MatchAllData match,int inn) throws InterruptedException {
  		
-	 
-	 
-	 if(debut1.equalsIgnoreCase("YES") && debut2.equalsIgnoreCase("YES")) {
-		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 500-SELECT-DATA-TYPE 0");
-		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-HEAD ");
-		 TimeUnit.MILLISECONDS.sleep(500);
-	 }else if(debut1.equalsIgnoreCase("YES") && debut2.equalsIgnoreCase("NO")) {
-		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 500-SELECT-DATA-TYPE 1");
-		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-HEAD "+ profile );
-		 if(profile.equalsIgnoreCase("ISPL SEASON 3")) {
-	 	 		
-	 	 	 	//2
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 0 " +  (tournament2.getMatches() != 0?String.valueOf(tournament2.getMatches()):"-"));
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 1 " +  (tournament2.getRuns() != 0?String.valueOf(tournament2.getRuns()):"-"));
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 2 " +  CricketFunctions.generateStrikeRate(tournament2.getRuns(), tournament2.getBallsFaced(), 0));
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 3 " +  best2);
-	 	 	 	TimeUnit.MILLISECONDS.sleep(500);
-	 	 	}else {
-	 	 		
-	 	 	 	//2
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 0 " +  stat2.getMatches());
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 1 " +  runs2);
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 2 " +  strikeRate2);
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 3 " +  best2);
-	 	 	 	TimeUnit.MILLISECONDS.sleep(500);
-	 	 	}
-	 }else if(debut1.equalsIgnoreCase("NO") && debut2.equalsIgnoreCase("YES")) {
-		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 500-SELECT-DATA-TYPE 2");
-		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-HEAD "+ profile );
-		 TimeUnit.MILLISECONDS.sleep(500);
-		 
-		 if(profile.equalsIgnoreCase("ISPL SEASON 3")) {
-	 	 		//System.out.println("Coming inside");
-	 	 		DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 0 " +  (tournament.getMatches() != 0?String.valueOf(tournament.getMatches()):"-"));
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 1 " +  (tournament.getRuns() != 0?String.valueOf(tournament.getRuns()):"-"));
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 2 " +  CricketFunctions.generateStrikeRate(tournament.getRuns(), tournament.getBallsFaced(), 0));
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 3 " +  best);
-	 	 	 	TimeUnit.MILLISECONDS.sleep(500);
-	 	 	 	
-	 	 	}else {
-	 	 		DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 0 " +  stat.getMatches());
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 1 " +  runs);
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 2 " +  strikeRate);
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 3 " +  best);
-	 	 	 	TimeUnit.MILLISECONDS.sleep(500);
-	 	 	 	
-	 	 	}
-	 }else {
-		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 500-SELECT-DATA-TYPE 3");
-		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-HEAD "+ profile );
-		 if(profile.equalsIgnoreCase("ISPL SEASON 3")) {
-	 	 		//System.out.println("Coming inside");
-	 	 		DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 0 " +  (tournament.getMatches() != 0?String.valueOf(tournament.getMatches()):"-"));
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 1 " +  (tournament.getRuns() != 0?String.valueOf(tournament.getRuns()):"-"));
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 2 " +  CricketFunctions.generateStrikeRate(tournament.getRuns(), tournament.getBallsFaced(), 0));
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 3 " +  best);
-	 	 	 	
-	 	 	 	//2
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 0 " +  (tournament2.getMatches() != 0?String.valueOf(tournament2.getMatches()):"-"));
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 1 " +  (tournament2.getRuns() != 0?String.valueOf(tournament2.getRuns()):"-"));
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 2 " +  CricketFunctions.generateStrikeRate(tournament2.getRuns(), tournament2.getBallsFaced(), 0));
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 3 " +  best2);
-	 	 	 	TimeUnit.MILLISECONDS.sleep(500);
-	 	 	}else {
-	 	 		DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 0 " +  stat.getMatches());
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 1 " +  runs);
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 2 " +  strikeRate);
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE1 3 " +  best);
-	 	 	 	
-	 	 	 	//2
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 0 " +  stat2.getMatches());
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 1 " +  runs2);
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 2 " +  strikeRate2);
-	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATVALUE2 3 " +  best2);
-	 	 	 	TimeUnit.MILLISECONDS.sleep(500);
-	 	 	}
-	 }
- 	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 302-NAME "+  player.getTicker_name());
- 	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 301-IMAGE "+ "C:\\\\Images\\\\ISPL\\\\PHOTOS\\"
-    			+ team.getTeamName4()+ "\\\\STRAIGHT_1024\\\\" +player.getPhoto()+ CricketUtil.PNG_EXTENSION);
- 	 	//2
- 	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 402_NAME "+  player2.getTicker_name());
- 	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 401-IMAGE "+ "C:\\\\Images\\\\ISPL\\\\PHOTOS\\"
-    			+ team.getTeamName4()+ "\\\\STRAIGHT_1024\\\\" +player2.getPhoto()+ CricketUtil.PNG_EXTENSION);
- 	 	
- 	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-TeamRefName " + team.getTeamBadge() );
- 		//head
- 	 	
- 	 	TimeUnit.MILLISECONDS.sleep(500);
- 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATHEAD 0" +  " MTS");
- 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATHEAD 1" +  " RUNS");
- 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATHEAD 2" +  " SR");
- 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 501-DATA-ALL STATHEAD 3" +  " BEST");
- 	 	
- 	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 503-SELECT-IMPACT 0");
- 	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 504-SELECT-IMPACT 0");
- 	 	
-		if(!CricketFunctions.checkBatAndBallImpactInOutPlayerISPL(match.getEventFile().getEvents(), inn, player.getPlayerId()).isEmpty()) {
-			switch(CricketFunctions.checkBatAndBallImpactInOutPlayerISPL(match.getEventFile().getEvents(), inn ,player.getPlayerId())) {
-			case "IMP_IN":
-				DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 503-SELECT-IMPACT 1");
-				break;
-			}
-		}
-		if(!CricketFunctions.checkBatAndBallImpactInOutPlayerISPL(match.getEventFile().getEvents(), inn, player2.getPlayerId()).isEmpty()) {
-			switch(CricketFunctions.checkBatAndBallImpactInOutPlayerISPL(match.getEventFile().getEvents(), inn ,player2.getPlayerId())) {
-			case "IMP_IN":
-				DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 504-SELECT-IMPACT 1");
-				break;
-			}
-		}
- 	}
+    	
+    	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-PlayerName01 "+  player.getTicker_name());
+    	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-layerImage01 "+ "C:\\\\Images\\\\ISPL\\\\PHOTOS\\"
+       			+ team.getTeamName4()+ "\\\\STRAIGHT_1024\\\\" +player.getPhoto()+ CricketUtil.PNG_EXTENSION);
+    	 	//2
+    	 	System.out.println("player.getTicker_name()" +player.getTicker_name());
+    	 	System.out.println("player2.getTicker_name()" + player2.getTicker_name());
+    	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 102-PlayerName01 "+  player2.getTicker_name());
+    	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-layerImage01 "+ "C:\\\\Images\\\\ISPL\\\\PHOTOS\\"
+       			+ team.getTeamName4()+ "\\\\STRAIGHT_1024\\\\" +player2.getPhoto()+ CricketUtil.PNG_EXTENSION);
+    	 	
+    	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME " + team.getTeamBadge() );
+    		//head
+    	 	
+   		
+    	}
    private void populateDoubleProfile(PrintWriter print_writer,MatchAllData match) {
  		
  		//System.out.println("COMONH INSIDE MAIn");
@@ -2782,56 +2712,53 @@ private void populateProjected(PrintWriter print_writer,MatchAllData match) {
    
       private void populateProfile(PrintWriter print_writer,MatchAllData match,int inn) throws InterruptedException {
     	  
-    	 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update NAME "+  player.getTicker_name());
-   	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update IMAGE "+ "C:\\\\Images\\\\ISPL\\\\PHOTOS\\"
-      			+ team.getTeamName4()+ "\\\\STRAIGHT_1024\\\\" +player.getPhoto()+ CricketUtil.PNG_EXTENSION);
-   	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-TeamRefName " + team.getTeamBadge() );
-   	 	TimeUnit.MILLISECONDS.sleep(500);
-   	    DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 201-SELECT-IMPACT 0");
+//    	 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update NAME "+  player.getTicker_name());
+////   	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update IMAGE "+ "C:\\\\Images\\\\ISPL\\\\PHOTOS\\"
+////      			+ team.getTeamName4()+ "\\\\STRAIGHT_1024\\\\" +player.getPhoto()+ CricketUtil.PNG_EXTENSION);
+//   	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-TeamRefName " + team.getTeamBadge() );
+//   	 	TimeUnit.MILLISECONDS.sleep(500);
+//   	    DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 201-SELECT-IMPACT 0");
     	  
-    	  
-    	  if(debut.equalsIgnoreCase("YES")) {
-    			 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 105-SELECT-DATA-TYPE 0");
-    			 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-HEAD "+ "" );
-    			 if(!CricketFunctions.checkBatAndBallImpactInOutPlayerISPL(match.getEventFile().getEvents(), inn, player.getPlayerId()).isEmpty()) {
-     				switch(CricketFunctions.checkBatAndBallImpactInOutPlayerISPL(match.getEventFile().getEvents(), inn ,player.getPlayerId())) {
-     				case "IMP_IN":
-     					DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 201-SELECT-IMPACT 1");
-     					break;
-     				}
-     			}
-    	  }else {
-    		  DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 105-SELECT-DATA-TYPE 1");
-    		  DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-HEAD "+ profile );
-    	 	 	TimeUnit.MILLISECONDS.sleep(500);
-    	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 103-DATA-ALL STATHEAD 0" +  " MTS");
-    	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 103-DATA-ALL STATHEAD 1" +  " RUNS");
-    	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 103-DATA-ALL STATHEAD 2" +  " SR");
-    	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 103-DATA-ALL STATHEAD 3" +  " BEST");
-    	 	 	TimeUnit.MILLISECONDS.sleep(500);
-    	 	 	
-    	 	 	if(!CricketFunctions.checkBatAndBallImpactInOutPlayerISPL(match.getEventFile().getEvents(), inn, player.getPlayerId()).isEmpty()) {
-    				switch(CricketFunctions.checkBatAndBallImpactInOutPlayerISPL(match.getEventFile().getEvents(), inn ,player.getPlayerId())) {
-    				case "IMP_IN":
-    					DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 201-SELECT-IMPACT 1");
-    					break;
-    				}
-    			}
-    	 	 	if(profile.equalsIgnoreCase("ISPL SEASON 3")) {
-    	 	 		DoadWriteToTrio(print_writer, "table:set_cell_value 103-DATA-ALL STATVALUE 0 " +  (tournament.getMatches() != 0?String.valueOf(tournament.getMatches()):"-"));
-    	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 103-DATA-ALL STATVALUE 1 " +  (tournament.getRuns() != 0?String.valueOf(tournament.getRuns()):"-"));
-    	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 103-DATA-ALL STATVALUE 2 " +  CricketFunctions.generateStrikeRate(tournament.getRuns(), tournament.getBallsFaced(), 0));
-    	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 103-DATA-ALL STATVALUE 3 " +  best);
-    	 	 	 	TimeUnit.MILLISECONDS.sleep(500);
-    	 	 	}else {
-    	 	 		DoadWriteToTrio(print_writer, "table:set_cell_value 103-DATA-ALL STATVALUE 0 " +  stat.getMatches());
-    	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 103-DATA-ALL STATVALUE 1 " +  runs);
-    	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 103-DATA-ALL STATVALUE 2 " +  strikeRate);
-    	 	 	 	DoadWriteToTrio(print_writer, "table:set_cell_value 103-DATA-ALL STATVALUE 3 " +  best);
-    	 	 	 	TimeUnit.MILLISECONDS.sleep(500);
-    	 	 	}
-    	  }
-    }
+    	  int rowId = 0;
+    	  for(BattingCard bc : inning.getBattingCard()) {
+    		  rowId = rowId + 1;
+			  if(bc.getPlayerId() == player.getPlayerId()) {
+				DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 102-PlayerName01 "+  bc.getPlayer().getTicker_name());
+				DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-layerImage01 "+ "C:\\\\Images\\\\ISPL\\\\Action_Images\\"
+			       			+ inning.getBatting_team().getTeamBadge() + "_" +bc.getPlayer().getPhoto()+ CricketUtil.PNG_EXTENSION);
+			      DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-AT "+  rowId);		
+			   }
+    	  	}
+			
+//			CricketFunctions.DoadWriteCommandToAllViz("-1 RENDERER*BACK_LAYER*TREE*$gfx_Profile$InAt_Profile$Profile$HeaderGrp$Info$txt_BattingHand*GEOM*TEXT SET " + player.getBattingStyle() + "\0", print_writers);
+//			if(WhichProfile.equalsIgnoreCase("DT20")) {
+//				CricketFunctions.DoadWriteCommandToAllViz("-1 RENDERER*BACK_LAYER*TREE*$gfx_Profile$InAt_Profile$Profile$HeaderGrp$Info$txt_Age*GEOM*TEXT SET " + "T20 CAREER" + "\0", print_writers);
+//			}else if(WhichProfile.equalsIgnoreCase("IT20")){
+//				CricketFunctions.DoadWriteCommandToAllViz("-1 RENDERER*BACK_LAYER*TREE*$gfx_Profile$InAt_Profile$Profile$HeaderGrp$Info$txt_Age*GEOM*TEXT SET " + "T20I CAREER" + "\0", print_writers);
+//			}else if(WhichProfile.equalsIgnoreCase("T20 MUMBAI")){
+//				CricketFunctions.DoadWriteCommandToAllViz("-1 RENDERER*BACK_LAYER*TREE*$gfx_Profile$InAt_Profile$Profile$HeaderGrp$Info$txt_Age*GEOM*TEXT SET " + "T20 MUMBAI CAREER" + "\0", print_writers);
+//			}else if(WhichProfile.equalsIgnoreCase("IPL")){
+//				CricketFunctions.DoadWriteCommandToAllViz("-1 RENDERER*BACK_LAYER*TREE*$gfx_Profile$InAt_Profile$Profile$HeaderGrp$Info$txt_Age*GEOM*TEXT SET " + "IPL CAREER" + "\0", print_writers);
+//			}else if(WhichProfile.equalsIgnoreCase("IPL 2026")){
+//				CricketFunctions.DoadWriteCommandToAllViz("-1 RENDERER*BACK_LAYER*TREE*$gfx_Profile$InAt_Profile$Profile$HeaderGrp$Info$txt_Age*GEOM*TEXT SET " + "IPL 2026" + "\0", print_writers);
+//			}else if(WhichProfile.equalsIgnoreCase("MT20 SEASON 3")){
+//				CricketFunctions.DoadWriteCommandToAllViz("-1 RENDERER*BACK_LAYER*TREE*$gfx_Profile$InAt_Profile$Profile$HeaderGrp$Info$txt_Age*GEOM*TEXT SET " + "T20 MUMBAI SEASON 3" + "\0", print_writers);
+//			}
+
+			DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 103-StatHead01 "+  "MATCHES");
+			
+			DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 103-StatValue01 "+  (stat.getMatches() != 0 ? stat.getMatches() : "-"));
+			
+			DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 104-StatHead02 "+  "RUNS");
+			
+			DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 104-StatValue02 "+  (stat.getRuns() != 0 ? stat.getRuns() : "-"));	
+			
+			DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 105-StatHead03 "+  "STRIKE RATE");
+			
+			DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 105-StatValue03 "+  CricketFunctions.generateStrikeRate(stat.getRuns(), stat.getBalls_faced(), 0));
+			
+    	
+      }
       
       private void populateProfileAuction(PrintWriter print_writer,MatchAllData match,int inn) throws InterruptedException {
     	  

@@ -173,6 +173,7 @@ public class IndexController
 		    	basePath = "C:\\Sports\\CricketWomen\\";
 		    	DatabaseContextHolder.setDb("WOMEN");
 		    }
+		    System.out.println("basePath - " + basePath);
 		    
 			mainCricketDir = basePath;
 			if(session_Configurations.getCricketDirectory().equalsIgnoreCase(CricketUtil.SECONDARY)) {
@@ -242,9 +243,21 @@ public class IndexController
 	@RequestMapping(value = {"/processCricketProcedures.html"}, method={RequestMethod.GET,RequestMethod.POST})    
 	public @ResponseBody String processCricketProcedures(
 			@RequestParam(value = "whatToProcess", required = false, defaultValue = "") String whatToProcess,
-			@RequestParam(value = "valueToProcess", required = false, defaultValue = "") String valueToProcess)  
+			@RequestParam(value = "valueToProcess", required = false, defaultValue = "") String valueToProcess,
+			@RequestParam(value = "Category", required = false, defaultValue = "") String Category)
 					throws Exception 
 	{
+		
+		if (Category.equalsIgnoreCase("men")) {
+	    	basePath = "C:\\Sports\\CricketMen\\";
+	    	DatabaseContextHolder.setDb("MEN");
+	    } else if (Category.equalsIgnoreCase("women")) {
+	    	basePath = "C:\\Sports\\CricketWomen\\";
+	    	DatabaseContextHolder.setDb("WOMEN");
+	    }else {
+	    	basePath = "C:\\Sports\\Cricket\\";
+	    	DatabaseContextHolder.setDb("LOCAL");
+	    }
 		//System.out.println("session_selected_broadcaster = " + session_selected_broadcaster);
 		switch (whatToProcess.toUpperCase()) {
 		case "GET-CATEGORY-DATA":
