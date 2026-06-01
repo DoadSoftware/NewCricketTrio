@@ -97,7 +97,11 @@
                   <!-- Row 5 -->
                   <tr>
                     <td>5</td><td>(n)</td><td>Opener name</td>
-                  </tr> 
+                  </tr>
+                  <!-- Row 6 -->
+                  <tr>
+                    <td>6</td><td>(F8)</td><td>Profile</td>
+                  </tr>  
                 </tbody>
               </table>
             </div>

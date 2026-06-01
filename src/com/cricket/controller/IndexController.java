@@ -58,7 +58,7 @@ public class IndexController
 	public static long last_match_time_stamp = 0;
 	public static DOAD_TRIO this_DOAD_TRIO;
 	public static Excel this_Excel = new Excel();
-	public static String basePath = "";
+	public static String basePath = "",category="";
 	public static MatchStats MatchStats;
 	public static MatchAllData session_match = new MatchAllData();
 	//public static EventFile session_event = new EventFile();
@@ -168,9 +168,11 @@ public class IndexController
 		    
 		    if (Category.equalsIgnoreCase("men")) {
 		    	basePath = "C:\\Sports\\CricketMen\\";
+		    	category = "MEN";
 		    	DatabaseContextHolder.setDb("MEN");
 		    } else if (Category.equalsIgnoreCase("women")) {
 		    	basePath = "C:\\Sports\\CricketWomen\\";
+		    	category = "WOMEN";
 		    	DatabaseContextHolder.setDb("WOMEN");
 		    }
 		    System.out.println("basePath - " + basePath);
@@ -248,16 +250,20 @@ public class IndexController
 					throws Exception 
 	{
 		
-		if (Category.equalsIgnoreCase("men")) {
-	    	basePath = "C:\\Sports\\CricketMen\\";
-	    	DatabaseContextHolder.setDb("MEN");
-	    } else if (Category.equalsIgnoreCase("women")) {
-	    	basePath = "C:\\Sports\\CricketWomen\\";
-	    	DatabaseContextHolder.setDb("WOMEN");
-	    }else {
-	    	basePath = "C:\\Sports\\Cricket\\";
-	    	DatabaseContextHolder.setDb("LOCAL");
-	    }
+		String currentCategory = session_Configurations.getCategory();
+
+		if ("men".equalsIgnoreCase(currentCategory)) {
+		    basePath = "C:\\Sports\\CricketMen\\";
+		    DatabaseContextHolder.setDb("MEN");
+		}
+		else if ("women".equalsIgnoreCase(currentCategory)) {
+		    basePath = "C:\\Sports\\CricketWomen\\";
+		    DatabaseContextHolder.setDb("WOMEN");
+		}
+		else {
+		    basePath = "C:\\Sports\\Cricket\\";
+		    DatabaseContextHolder.setDb("LOCAL");
+		}
 		//System.out.println("session_selected_broadcaster = " + session_selected_broadcaster);
 		switch (whatToProcess.toUpperCase()) {
 		case "GET-CATEGORY-DATA":
@@ -335,7 +341,7 @@ public class IndexController
 			switch (session_Configurations.getBroadcaster()) {
 			case CricketUtil.DOAD_TRIO:
 				this_DOAD_TRIO.ProcessGraphicOption(whatToProcess, cricketService, session_match, print_writer, headToHead, pastTournament,
-						past_tape, valueToProcess);
+						past_tape, valueToProcess, session_Configurations.getCategory());
 			}
 			return objectMapper.writeValueAsString(session_match).toString();
 		}

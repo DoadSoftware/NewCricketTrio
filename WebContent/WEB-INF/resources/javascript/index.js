@@ -163,12 +163,12 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			processCricketProcedures('LOAD_GRAPHICS');
 			addItemsToList('LOAD_GRAPHICS-OPTION',null)
 			break;
-		case 112://F1 - graphics_options
+		/*case 112://F1 - graphics_options
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
 			processCricketProcedures('GRAPHIC_OPTIONS');
-			break;
+			break;*/
 		/*case 90://Z - ISPL 50-50
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
@@ -279,12 +279,12 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			$("#expiry_message").hide();
 			addItemsToList('DOUBLEOPENERPROFILEBAT_OPTIONS',null);
 			break;*/	
-		case 120://F9 Ball profile
+		/*case 120://F9 Ball profile
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
 			addItemsToList('PLAYERPROFILEBALL_OPTIONS',null);
-			break;
+			break;*/
 		/*case 75://k Auction profile
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
@@ -297,7 +297,7 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			$("#expiry_message").hide();
 			addItemsToList('PLAYERPROFILEBATAUCTION_OPTIONS',null);
 			break;*/
-		case 70://F - Fixture
+		/*case 70://F - Fixture
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
@@ -308,7 +308,7 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
 			addItemsToList('POPULATE_FF_CURRENT_MATCH_SUMMARY',null);
-			break;
+			break;*/
 			
 		/*case 76: // l - most wickets
 		    $("#captions_div").hide();
@@ -319,7 +319,7 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 		case 76: //caption l (Alt_r) 
 			processCricketProcedures('RE_READ_DATA');
 			break;
-		case 77://m - most runs
+		/*case 77://m - most runs
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
@@ -379,7 +379,7 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
 			 addItemsToList('RUN_RATE-OPTION',null);
-			break;	
+			break;	*/
 		}
 		
 		break;
@@ -1543,6 +1543,11 @@ function addItemsToList(whatToProcess, dataToProcess)
 				option = document.createElement('option');
 				option.value = 'MT20 SEASON 3';
 				option.text = 'MT20 SEASON 3';
+				select.appendChild(option);
+				
+				option = document.createElement('option');
+				option.value = 'WPL';
+				option.text = 'WPL(Only for women)';
 				select.appendChild(option);
 				
 				row.insertCell(1).appendChild(select); 

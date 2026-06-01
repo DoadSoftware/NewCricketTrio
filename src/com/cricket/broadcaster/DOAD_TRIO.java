@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-
+import com.cricket.config.DatabaseContextHolder;
 import com.cricket.containers.Scene;
 import com.cricket.controller.IndexController;
 import com.cricket.ispl.mvp_leaderBoard;
@@ -69,7 +69,7 @@ public class DOAD_TRIO extends Scene{
 	double average = 0 ,average2 =0;
 	String Data = "",hundred = "",fifty = "",strikeRate = "", thirty = "",
 		batAverage = "",economy = "",best = "",runs = "",short_name = "", surName = "",profile ="",debut1 = "",debut2 = "" ,debut = "",debut3 ="";
-	String Data2 = "",strikeRate2 = "", runs2 = "",  best2 = "",
+	String Data2 = "",strikeRate2 = "", runs2 = "",  best2 = "",whichprofile,
 			batAverage2 = "";
 	
 	public DOAD_TRIO() {
@@ -82,7 +82,7 @@ public class DOAD_TRIO extends Scene{
 	}
 
 	public Object ProcessGraphicOption(String whatToProcess, CricketService cricketService, MatchAllData match, PrintWriter print_writer, 
-		HeadToHead headToHead, List<Tournament> pasttornament,List<BestStats> tapeball, String valueToProcess) throws Exception
+		HeadToHead headToHead, List<Tournament> pasttornament,List<BestStats> tapeball, String valueToProcess, String category) throws Exception
 	{
 		switch(whatToProcess.toUpperCase()) {
 		//Load Scene
@@ -388,26 +388,26 @@ public class DOAD_TRIO extends Scene{
 			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[2]);
 			break;	
 		case "POPULATE_GRAPHICS_BATPROFILE":
-			System.out.println("valueToProcess+=====================" + valueToProcess);
-			
-			
+			 whichprofile =valueToProcess.split(",")[1].toUpperCase();
 				inning = match.getMatch().getInning().stream().filter(inn -> inn.getInningNumber() == Integer.valueOf(valueToProcess.split(",")[4]))
 					.findAny().orElse(null);
-				System.out.println("HELLO");
 				player = CricketFunctions.getPlayerFromMatchData(Integer.valueOf(valueToProcess.split(",")[0]), match);
-				System.out.println("HELLO1");
 				
+				String profileName = valueToProcess.split(",")[1].trim();
+				List<StatsType> allTypes = cricketService.getAllStatsType();
+				statsType = allTypes.stream()
+				        .filter(stype ->
+				            stype.getStats_short_name() != null &&
+				            stype.getStats_short_name().equalsIgnoreCase(profileName))
+				        .findAny()
+				        .orElse(null);
+
 				if(!valueToProcess.split(",")[1].equalsIgnoreCase("T20 MUMBAI")) {
-					System.out.println("valueToProcess.split(\",\")[1]" + valueToProcess.split(",")[1]);
-					System.out.println(cricketService.getAllStatsType().toString());
 					statsType = cricketService.getAllStatsType().stream().filter(stype -> stype.getStats_short_name().
 							equalsIgnoreCase(valueToProcess.split(",")[1].trim())).findAny().orElse(null);
-					System.out.println(statsType.getStats_id());
 					stat = cricketService.getAllStats().stream().filter(st -> st.getPlayer_id() == player.getPlayerId() && statsType.getStats_id() == st.getStats_type_id()).findAny().orElse(null);
-					System.out.println("HELLO4");
 					stat.setStats_type(statsType);
 				}
-				System.out.println("HELLO5");
 			
 				switch (valueToProcess.split(",")[1].toUpperCase()) {
 				case "T20 MUMBAI":
@@ -426,13 +426,12 @@ public class DOAD_TRIO extends Scene{
 //					return "populatePlayerProfile: Team id [" + player.getTeamId() + "] from database is returning NULL";
 //				}
 			if(valueToProcess.split(",")[2].equalsIgnoreCase("AR")) {
-				System.out.println("HELLO6");
 				DoadWriteToTrio(print_writer, "read_template In_AT_Profile");
 			}else {
 				DoadWriteToTrio(print_writer, "read_template Profile_Drone");
 			}
 			
-			populateProfile(print_writer, match,Integer.valueOf(valueToProcess.split(",")[4]));
+			populateProfile(print_writer, match,Integer.valueOf(valueToProcess.split(",")[4]),category);
 			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[3]);
 			break;
 		case "POPULATE_GRAPHICS_AUCTIONBATPROFILE":
@@ -1103,7 +1102,7 @@ public class DOAD_TRIO extends Scene{
 		        DoadWriteToTrio(print_writer, "read_template OpenerProfile_Drone");
 		    }
 
-		    populateOpenerProfile(print_writer, match, Integer.valueOf(valueToProcess.split(",")[4]));
+		    populateOpenerProfile(print_writer, match, Integer.valueOf(valueToProcess.split(",")[4]),category);
 		    DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[3]);
 		    break;	
 		case "POPULATE_GRAPHICS_DOUBLEBATPROFILE":
@@ -2645,18 +2644,26 @@ public class DOAD_TRIO extends Scene{
 // 	}
     
     
-    private void populateOpenerProfile(PrintWriter print_writer,MatchAllData match,int inn) throws InterruptedException {
+    private void populateOpenerProfile(PrintWriter print_writer,MatchAllData match,int inn,String cat) throws InterruptedException {
  		
     	
     	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-PlayerName01 "+  player.getTicker_name());
-    	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-layerImage01 "+ "C:\\\\Images\\\\ISPL\\\\PHOTOS\\"
-       			+ team.getTeamName4()+ "\\\\STRAIGHT_1024\\\\" +player.getPhoto()+ CricketUtil.PNG_EXTENSION);
+    	 	
+    	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-layerImage01 "+ 
+    				"C:\\\\Images\\\\T20_MUMBAI\\\\PHOTOS\\"
+    		      			+ cat +  "\\\\STRAIGHT_1024\\\\"   +  team.getTeamName4()+ "\\\\" +
+    		      			player.getPhoto()+ CricketUtil.PNG_EXTENSION);
+    	 	
+    	 	
     	 	//2
     	 	System.out.println("player.getTicker_name()" +player.getTicker_name());
     	 	System.out.println("player2.getTicker_name()" + player2.getTicker_name());
     	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 102-PlayerName01 "+  player2.getTicker_name());
-    	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-layerImage01 "+ "C:\\\\Images\\\\ISPL\\\\PHOTOS\\"
-       			+ team.getTeamName4()+ "\\\\STRAIGHT_1024\\\\" +player2.getPhoto()+ CricketUtil.PNG_EXTENSION);
+    	 	
+    	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 102-layerImage02 "+ 
+    				"C:\\\\Images\\\\T20_MUMBAI\\\\PHOTOS\\"
+    		      			+ cat +  "\\\\STRAIGHT_1024\\\\"   +  team.getTeamName4()+ "\\\\" +
+    		      			player2.getPhoto()+ CricketUtil.PNG_EXTENSION);
     	 	
     	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME " + team.getTeamBadge() );
     		//head
@@ -2710,26 +2717,32 @@ public class DOAD_TRIO extends Scene{
  	 	
  	}
    
-      private void populateProfile(PrintWriter print_writer,MatchAllData match,int inn) throws InterruptedException {
-    	  
-//    	 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update NAME "+  player.getTicker_name());
-////   	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update IMAGE "+ "C:\\\\Images\\\\ISPL\\\\PHOTOS\\"
-////      			+ team.getTeamName4()+ "\\\\STRAIGHT_1024\\\\" +player.getPhoto()+ CricketUtil.PNG_EXTENSION);
-//   	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-TeamRefName " + team.getTeamBadge() );
-//   	 	TimeUnit.MILLISECONDS.sleep(500);
-//   	    DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 201-SELECT-IMPACT 0");
-    	  
+      private void populateProfile(PrintWriter print_writer,MatchAllData match,int inn,String cat) throws InterruptedException {
+    	    	  
     	  int rowId = 0;
     	  for(BattingCard bc : inning.getBattingCard()) {
     		  rowId = rowId + 1;
 			  if(bc.getPlayerId() == player.getPlayerId()) {
 				DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 102-PlayerName01 "+  bc.getPlayer().getTicker_name());
-				DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-layerImage01 "+ "C:\\\\Images\\\\ISPL\\\\Action_Images\\"
-			       			+ inning.getBatting_team().getTeamBadge() + "_" +bc.getPlayer().getPhoto()+ CricketUtil.PNG_EXTENSION);
-			      DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-AT "+  rowId);		
+				DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-layerImage01 "+ 
+				"C:\\\\Images\\\\T20_MUMBAI\\\\PHOTOS\\"
+		      			+ cat +  "\\\\STRAIGHT_1024\\\\"   +  inning.getBatting_team().getTeamName4()+ "\\\\" +
+						bc.getPlayer().getPhoto()+ CricketUtil.PNG_EXTENSION);
+			      DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-AT "+  rowId);	
+			      
+			      DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME "+  inning.getBatting_team().getTeamBadge());
 			   }
     	  	}
 			
+    	  if(whichprofile.equalsIgnoreCase("MT20 SEASON 3")) {
+    		  DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 003-MATCH-NUMBER "+  "MT20 SEASON 3");
+    	  }else if(whichprofile.equalsIgnoreCase("WPL")) {
+    		  DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 003-MATCH-NUMBER "+  "WPL CAREER");
+    	  } else {
+    		  DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 003-MATCH-NUMBER "+  "T20 MUMBAI CAREER");
+    	  }
+    	  
+    	  
 //			CricketFunctions.DoadWriteCommandToAllViz("-1 RENDERER*BACK_LAYER*TREE*$gfx_Profile$InAt_Profile$Profile$HeaderGrp$Info$txt_BattingHand*GEOM*TEXT SET " + player.getBattingStyle() + "\0", print_writers);
 //			if(WhichProfile.equalsIgnoreCase("DT20")) {
 //				CricketFunctions.DoadWriteCommandToAllViz("-1 RENDERER*BACK_LAYER*TREE*$gfx_Profile$InAt_Profile$Profile$HeaderGrp$Info$txt_Age*GEOM*TEXT SET " + "T20 CAREER" + "\0", print_writers);
@@ -2756,6 +2769,7 @@ public class DOAD_TRIO extends Scene{
 			DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 105-StatHead03 "+  "STRIKE RATE");
 			
 			DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 105-StatValue03 "+  CricketFunctions.generateStrikeRate(stat.getRuns(), stat.getBalls_faced(), 0));
+			
 			
     	
       }
