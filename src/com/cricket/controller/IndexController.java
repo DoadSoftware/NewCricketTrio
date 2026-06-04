@@ -295,6 +295,8 @@ public class IndexController
 		case "GRAPHIC_OPTIONS":
 			Map<String,String> map = getDataFromExcelFile(mainCricketDir);
 			return objectMapper.writeValueAsString(map.keySet());
+		case "ISPL_PREVIOUS_MATCH_SUMMARY_OPTIONS":
+			return objectMapper.writeValueAsString(CricketFunctions.processAllFixtures(cricketService));
 		case "POPULATE_MOSTRUNS": case "POPULATE_MOSTWKTS": case "POPULATE_MOSTFOURS": case "POPULATE_MOSTSIXES": case "POPULATE_MOSTNINE":
 			List<Tournament> tournamentStats = CricketFunctions.extractTournamentData("CURRENT_MATCH_DATA", false, 
 					headToHead.getH2hPlayer(), cricketService, session_match, pastTournament);

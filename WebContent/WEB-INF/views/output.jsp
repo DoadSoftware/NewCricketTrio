@@ -101,6 +101,18 @@
                   <!-- Row 6 -->
                   <tr>
                     <td>6</td><td>(F8)</td><td>Profile</td>
+                  </tr>
+                  <!-- Row 6 -->  
+                 <tr>
+                    <td>7</td><td>(F2)</td><td>In At</td>
+                  </tr> 
+                   <!-- Row 8 -->  
+                 <tr>
+                    <td>8</td><td>(F1)</td><td>CRR & RRR for inning 2</td>
+                  </tr> 
+                  <!-- Row 9 -->  
+                 <tr>
+                    <td>9</td><td>(F3)</td><td>Boundaries</td>
                   </tr>  
                 </tbody>
               </table>
