@@ -17,8 +17,6 @@ function onPageLoadEvent(whichPage) {
 	switch (whichPage) {
 		case 'OUTPUT':
 			$("#select_graphic_options_div").empty();
-			document.getElementById('selected_inning').innerHTML = 'Which KeyPress: 1';
-			document.getElementById('which_keypress').value = parseInt(1);
 			break;
 	}
 }
@@ -130,30 +128,111 @@ function onPageLoadEvent(whichPage) {
     }
 }
 
-
-
-
 function initialiseForm(whatToProcess,dataToProcess)
 {
 	switch (whatToProcess) {
 	case 'initialise':
 		processUserSelection($('#select_broadcaster'));
 		break;
+	case 'UPDATE-MATCH-ON-OUTPUT-FORM':
+		if (dataToProcess && dataToProcess.match && dataToProcess.match.inning &&
+		    dataToProcess.match.inning[0] && dataToProcess.match.inning[0].batting_team &&
+		    dataToProcess.match.inning[0].batting_team.teamName4) 
+		{	
+		    batteamname = dataToProcess.match.inning[0].batting_team.teamName4;
+		}
+		
+		if (dataToProcess && dataToProcess.match && dataToProcess.match.inning &&
+		    dataToProcess.match.inning[1] && dataToProcess.match.inning[1].batting_team &&
+		    dataToProcess.match.inning[1].batting_team.teamName4) 
+		{
+		    ballteamname = dataToProcess.match.inning[1].batting_team.teamName4;
+		}
+		
+		dataToProcess.match.inning.forEach(function(inn, index, arr) {
+			document.getElementById('inning1_teamScore_lbl').innerHTML = batteamname + ' : ' +
+				parseInt(dataToProcess.match.inning[0].totalRuns) + '-' + parseInt(dataToProcess.match.inning[0].totalWickets) + ' (' +
+				parseInt(dataToProcess.match.inning[0].totalOvers) + '.' + parseInt(dataToProcess.match.inning[0].totalBalls) + ')';
+
+			document.getElementById('inning2_teamScore_lbl').innerHTML = ballteamname + ' : ' +
+				parseInt(dataToProcess.match.inning[1].totalRuns) + '-' + parseInt(dataToProcess.match.inning[1].totalWickets) + ' (' +
+				parseInt(dataToProcess.match.inning[1].totalOvers) + '.' + parseInt(dataToProcess.match.inning[1].totalBalls) + ')';
+
+			if (inn.isCurrentInning == 'YES') {
+				inn.battingCard.forEach(function(bc, index, arr) {
+					if (inn.partnerships != null && inn.partnerships.length > 0) {
+						inn.partnerships.forEach(function(par, index, arr) {
+							if (bc.playerId == par.firstBatterNo) {
+								if (bc.status == 'OUT') {
+									document.getElementById('inning1_battingcard1_lbl').innerHTML = bc.player.ticker_name + ' ' + bc.runs + '(' + bc.balls + ')';
+									document.getElementById('inning1_battingcard1_lbl').style.color = 'red';
+								} else {
+									if (bc.onStrike == 'YES') {
+										document.getElementById('inning1_battingcard1_lbl').innerHTML = bc.player.ticker_name + '*' + ' ' + bc.runs + '(' + bc.balls + ')';
+									} else {
+										document.getElementById('inning1_battingcard1_lbl').innerHTML = bc.player.ticker_name + ' ' + bc.runs + '(' + bc.balls + ')';
+									}
+									document.getElementById('inning1_battingcard1_lbl').style.color = 'green';
+								}
+							}
+							else if (bc.playerId == par.secondBatterNo) {
+								if (bc.status == 'OUT') {
+									document.getElementById('inning1_battingcard2_lbl').innerHTML = bc.player.ticker_name + ' ' + bc.runs + '(' + bc.balls + ')';
+									document.getElementById('inning1_battingcard2_lbl').style.color = 'red';
+								} else {
+									if (bc.onStrike == 'YES') {
+										document.getElementById('inning1_battingcard2_lbl').innerHTML = bc.player.ticker_name + '*' + ' ' + bc.runs + '(' + bc.balls + ')';
+									} else {
+										document.getElementById('inning1_battingcard2_lbl').innerHTML = bc.player.ticker_name + ' ' + bc.runs + '(' + bc.balls + ')';
+									}
+									document.getElementById('inning1_battingcard2_lbl').style.color = 'green';
+								}
+							}
+						});
+					}
+				});
+				inn.bowlingCard.forEach(function(boc, index, arr) {
+					if (boc.status == 'CURRENTBOWLER' || boc.status == 'LASTBOWLER') {
+						document.getElementById('inning1_bowlingcard_lbl').innerHTML = boc.player.ticker_name + ' ' + boc.wickets
+							+ '-' + boc.runs + '(' + boc.overs + '.' + boc.balls + ')';
+					}
+				});
+			}
+		});
+		break;
 	}
-}
+}	
 function processUserSelectionData(whatToProcess,dataToProcess){
-	//alert(dataToProcess);
+//	alert(dataToProcess);
 	switch (whatToProcess) {
 	case 'LOGGER_FORM_KEYPRESS':
 		switch (dataToProcess) {
-		case 49:
-			document.getElementById('which_keypress').value = parseInt(1); // DJ
-			document.getElementById('selected_inning').innerHTML = 'Which keypress: ' + (parseInt(1));
-			
-			break;
-		case 50: 
-			document.getElementById('which_keypress').value = parseInt(2); // DJ
-			document.getElementById('selected_inning').innerHTML = 'Which keypress: ' + (parseInt(2));
+		case 49: case 50:
+			if (match_data.setup.maxOvers > 0) {
+				switch (dataToProcess) {
+					case '3': case '4': // Key 1 to 4
+						alert("3rd and 4th inning NOT available in a limited over match");
+						return false;
+				}
+			}
+			if (dataToProcess == 49) {
+				document.getElementById('which_keypress').value = parseInt(1); // DJ
+				document.getElementById('selected_inning').innerHTML = 'Selected Inning: ' + (parseInt(1));
+				
+				document.getElementById('inning1_teamScore_lbl').style.backgroundColor = '#990000';
+				document.getElementById('inning2_teamScore_lbl').style.backgroundColor = '';
+				document.getElementById('inning1_teamScore_lbl').style.color = 'white';
+				document.getElementById('inning2_teamScore_lbl').style.color = '';
+
+			} else if (dataToProcess == 50) {
+				document.getElementById('which_keypress').value = parseInt(2); // DJ
+				document.getElementById('selected_inning').innerHTML = 'Selected Inning: ' + (parseInt(2));
+				
+				document.getElementById('inning2_teamScore_lbl').style.backgroundColor = '#990000';
+				document.getElementById('inning1_teamScore_lbl').style.backgroundColor = '';
+				document.getElementById('inning2_teamScore_lbl').style.color = 'white';
+				document.getElementById('inning1_teamScore_lbl').style.color = '';
+			}
 			
 			break;		
 		case 32:
@@ -175,12 +254,12 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			$("#expiry_message").hide();
 			processCricketProcedures('ISPL_50_50_GRAPHIC_OPTIONS');
 			break;*/
-		/*case 71://G - TAPE BALL
+		case 88://x - LAST FEW OVERS
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
-			processCricketProcedures('ISPL_TAPEBALL_GRAPHIC_OPTIONS');
-			break;*/
+			processCricketProcedures('LASTX_GRAPHIC_OPTIONS');
+			break;
 		case 66://B - COmparison
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
@@ -231,25 +310,14 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			$("#expiry_message").hide();
 			addItemsToList('ISPL_TARGET_OPTIONS',null);
 			break;
-		/*case 117://F6 - TOSS -used
-			$("#captions_div").hide();
-			$("#cancel_match_setup_btn").hide();
-			$("#expiry_message").hide();
-			addItemsToList('ISPL_TOSS_OPTIONS',null);
-			break;*/
+		
 		/*case 68://d- PARTNERSHIP
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
 			 addItemsToList('POPULATE_PARTNERSHIP', null);
 			break;	*/
-		/*case 78://N - TAPE BALL
-			$("#captions_div").hide();
-			$("#cancel_match_setup_btn").hide();
-			$("#expiry_message").hide();
-			processCricketProcedures('ISPL_NEXT_BAT_OPTIONS');
-			processCricketProcedures('ISPL_NEXT_BAT_GRAPHIC_OPTIONS');
-			break;*/	
+		
 		case 67://c equation
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
@@ -268,15 +336,7 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			$("#expiry_message").hide();
 			addItemsToList('INAT_OPTIONS',null);
 			break;	
-			
-			
-			
-		/*case 74://j Auction profile
-			$("#captions_div").hide();
-			$("#cancel_match_setup_btn").hide();
-			$("#expiry_message").hide();
-			addItemsToList('PLAYERMOSTRUN_OPTIONS',null);
-			break;	*/
+		
 		case 78://N - DOUBLEPLAYERPROFILE
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
@@ -307,12 +367,7 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			$("#expiry_message").hide();
 			addItemsToList('PLAYERPROFILEBATAUCTION_OPTIONS',null);
 			break;*/
-		/*case 70://F - Fixture
-			$("#captions_div").hide();
-			$("#cancel_match_setup_btn").hide();
-			$("#expiry_message").hide();
-			addItemsToList('MATCHID_OPTIONS',null);
-			break;		
+		/*		
 		case 115://F4 - MATCH SUMMARY
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
@@ -320,29 +375,10 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			addItemsToList('POPULATE_FF_CURRENT_MATCH_SUMMARY',null);
 			break;*/
 			
-		/*case 76: // l - most wickets
-		    $("#captions_div").hide();
-		    $("#cancel_match_setup_btn").hide();
-		    $("#expiry_message").hide();
-		    addItemsToList('POPULATE_MOSTWKTS', null);
-		    break;*/
 		case 76: //caption l (Alt_r) 
 			processCricketProcedures('RE_READ_DATA');
 			break;
-		/*case 77://m - most runs
-			$("#captions_div").hide();
-			$("#cancel_match_setup_btn").hide();
-			$("#expiry_message").hide();
-			//addItemsToList('POPULATE_MOSTRUNS',null);
-			processCricketProcedures('POPULATE_MOSTRUNS');
-			break;
-		case 87: // w - most wickets
-		    $("#captions_div").hide();
-		    $("#cancel_match_setup_btn").hide();
-		    $("#expiry_message").hide();
-		   // addItemsToList('POPULATE_MOSTWKTS', null);
-		    processCricketProcedures('POPULATE_MOSTWKTS');
-		    break;	
+		/*
 		case 81: // q - most nines
 		    $("#captions_div").hide();
 		    $("#cancel_match_setup_btn").hide();
@@ -365,12 +401,7 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 		   // addItemsToList('POPULATE_MOSTSIXES', null);
 		    processCricketProcedures('POPULATE_MOSTSIXES');
 		    break;
- 		case 89: // y - last x balls
-		    $("#captions_div").hide();
-		    $("#cancel_match_setup_btn").hide();
-		    $("#expiry_message").hide();
-		   addItemsToList('POPULATE_LASTXBALLS', null);
-		    break;
+ 		
 		        	    
 		case 68://d- PARTNERSHIP
 			$("#captions_div").hide();
@@ -402,7 +433,59 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
 			processCricketProcedures('ISPL_PREVIOUS_MATCH_SUMMARY_OPTIONS');
+			break;
+		case 118://F7 - Next to BAt
+			$("#captions_div").hide();
+			$("#cancel_match_setup_btn").hide();
+			$("#expiry_message").hide();
+			addItemsToList('ISPL_NEXT_BAT_OPTIONS',null);
+		//	processCricketProcedures('ISPL_NEXT_BAT_GRAPHIC_OPTIONS');
+			break;
+		case 84://t - TOSS -used
+			$("#captions_div").hide();
+			$("#cancel_match_setup_btn").hide();
+			$("#expiry_message").hide();
+			addItemsToList('ISPL_TOSS_OPTIONS',null);
+			break;
+		case 86://v - Vixtory -used
+			$("#captions_div").hide();
+			$("#cancel_match_setup_btn").hide();
+			$("#expiry_message").hide();
+			addItemsToList('VICTORY_OPTIONS',null);
 			break;	
+		case 89: // y - last x balls
+		    $("#captions_div").hide();
+		    $("#cancel_match_setup_btn").hide();
+		    $("#expiry_message").hide();
+		   addItemsToList('POPULATE_LASTXBALLS', null);
+		    break;	
+		/*case 77://m - <MAtchid>
+			$("#captions_div").hide();
+			$("#cancel_match_setup_btn").hide();
+			$("#expiry_message").hide();
+			addItemsToList('MATCHID_OPTIONS',null);
+			break;*/
+		/*case 77://j Auction profile
+			$("#captions_div").hide();
+			$("#cancel_match_setup_btn").hide();
+			$("#expiry_message").hide();
+			addItemsToList('PLAYERMOSTRUN_OPTIONS',null);
+			break;	*/
+		case 74://j - most runs
+			$("#captions_div").hide();
+			$("#cancel_match_setup_btn").hide();
+			$("#expiry_message").hide();
+			//addItemsToList('POPULATE_MOSTRUNS',null);
+			processCricketProcedures('POPULATE_MOSTRUNS');
+			break;	
+		case 87: // w - most wickets
+		    $("#captions_div").hide();
+		    $("#cancel_match_setup_btn").hide();
+		    $("#expiry_message").hide();
+		   // addItemsToList('POPULATE_MOSTWKTS', null);
+		    processCricketProcedures('POPULATE_MOSTWKTS');
+		    break;	
+							
 			
 		}
 		
@@ -500,6 +583,12 @@ function processUserSelection(whichInput)
 		break;
 	case "populate_graphics_toss":
 		processCricketProcedures('POPULATE_GRAPHICS_TOSS');
+		break;
+	case "populate_graphics_victory":
+		processCricketProcedures('POPULATE_GRAPHICS_VCTORYY');
+		break;
+	case "LAST_XBALL_GFX":	
+		processCricketProcedures('POPULATE_GRAPHICS_LASTXOVERS');
 		break;
 	case "populate_graphics_matchid":
 		processCricketProcedures('POPULATE_GRAPHICS_MATCHID');
@@ -631,8 +720,14 @@ function processCricketProcedures(whatToProcess)
 	case 'POPULATE_GRAPHICS_ISPL_TAPE':
 		valueToProcess = $('#whichScene').val() + ',' + $('#whichPlayer').val() + ','  + $('#savePointsTable').val();
 		break;
+	case "POPULATE_GRAPHICS_LASTXOVERS":
+		valueToProcess = $('#selectOvernumber').val() + ',' + $('#savePointsTable').val();
+		break;	
+	case "POPULATE_GRAPHICS_TOSS":	
+		valueToProcess = $('#selecttoss').val() + ',' + $('#savePointsTable').val();
+	    break;
 	case"POPULATE_GRAPHICS_COMPARISION":case"POPULATE_GRAPHICS_NEXT_TO_BAT":case "POPULATE_ISPL_FF_MATCH_SUMMARY": case "POPULATE_GRAPHICS_TARGET":  case "POPULATE_GRAPHICS_MVP_LEADERBOARD":
-	case "POPULATE_GRAPHICS_MATCHID": case "POPULATE_GRAPHICS_MVP": case "POPULATE_GRAPHICS_TOSS": case "POPULATE_GRAPHICS_EQUATION":  case "POPULATE_GRAPHICS_REQUIREDRUNRATE":
+	case "POPULATE_GRAPHICS_MATCHID": case "POPULATE_GRAPHICS_MVP":  case "POPULATE_GRAPHICS_VCTORYY":  case "POPULATE_GRAPHICS_EQUATION":  case "POPULATE_GRAPHICS_REQUIREDRUNRATE":
 	case "POPULATE_GRAPHICS_PROJECTED": case "POPULATE_GRAPHICS_CURRENTPARTERNERSHIP": case "POPULATE_GRAPHICS_UPLINE":
 	 	valueToProcess = $('#savePointsTable').val() + ',' + $('#selectgraphictype').val();
 		break;
@@ -667,6 +762,7 @@ function processCricketProcedures(whatToProcess)
 			case 'READ-MATCH-AND-POPULATE': case "RE_READ_DATA":
 				if(data){
 					match_data = data;
+					initialiseForm('UPDATE-MATCH-ON-OUTPUT-FORM', data);
 				}
 				if(whatToProcess == "RE_READ_DATA"){
 					alert("Data is Loaded");
@@ -709,6 +805,9 @@ function processCricketProcedures(whatToProcess)
 			case 'GRAPHIC_OPTIONS':
 				addItemsToList('GRAPHICS',data);
 				break;
+			case 'LASTX_GRAPHIC_OPTIONS':
+				addItemsToList('LAST_XOVERS_OPTIONSS',data);
+				break;		
 			case 'POPULATE_MOSTRUNS':
 				addItemsToList('MOST_RUNS_GRAPHIC_OPTION',data);
 				break;
@@ -2059,8 +2158,8 @@ function addItemsToList(whatToProcess, dataToProcess)
      			 document.getElementById('select_graphic_options_div').style.display = '';
 			break;
 		case 'LOAD_GRAPHICS-OPTION':case 'GRAPHICS': case 'ISPL_50_50_OPTIONS': case 'ISPL_BALL_OPTIONS':case 'ISPL_NEXT_BAT_OPTIONS':case'ISPL_COMPARISION_OPTIONS':
-		case "ISPL_LINEUP_OPTIONS":case "ISPL_PREVIOUS_MATCH_SUMMARY_OPTIONSS":case 'POPULATE_FF_CURRENT_MATCH_SUMMARY': case 'FIXTURE_OPTIONS': 
-		case "ISPL_TARGET_OPTIONS": case "ISPL_POJECTED_OPTIONS": case "ISPL_TOSS_OPTIONS": case "ISPL_EQUATION_OPTIONS": case "ISPL_MVP_OPTIONS": case "MATCHID_OPTIONS":
+		case "ISPL_LINEUP_OPTIONS":case "ISPL_PREVIOUS_MATCH_SUMMARY_OPTIONSS": case 'LAST_XOVERS_OPTIONSS': case 'POPULATE_FF_CURRENT_MATCH_SUMMARY': case 'FIXTURE_OPTIONS': 
+		case "ISPL_TARGET_OPTIONS": case "ISPL_POJECTED_OPTIONS": case "ISPL_TOSS_OPTIONS": case "VICTORY_OPTIONS": case "ISPL_EQUATION_OPTIONS": case "ISPL_MVP_OPTIONS": case "MATCHID_OPTIONS":
 		 case "MOST_RUNS_GRAPHIC_OPTION": case "ISPLTAPEBALLOVER_GRAPHIC_OPTION": case "MOST_WKTS_GRAPHIC_OPTION": case "MOST__GRAFOURS_PHIC_OPTION": case 'MOST_SIX_GRAPHIC_OPTION':
 		case "ISPL_BOUNDARIES_OPTIONS": case "ISPL_MVP_OPTIONS_LEADERBOARD": case "MOST_NINE_GRAPHIC_OPTION":  case "POPULATE_LASTXBALLS": case "POPULATE_PARTNERSHIP":
 		case "LINEUP_GRAPHIC_OPTIONS": case "RUN_RATE-OPTION": case 'ISPL_PREVIOUS_MATCH_SUMMARY_GRAPHIC_OPTIONS': 
@@ -2130,6 +2229,140 @@ function addItemsToList(whatToProcess, dataToProcess)
 						    
 							document.getElementById('select_graphic_options_div').style.display = '';
 							break;
+					case "ISPL_TOSS_OPTIONS":	
+						select = document.createElement('select');
+						select.id = 'selecttoss';
+						select.name = select.id;
+						
+						option = document.createElement('option');
+						option.value = match_data.setup.homeTeam.teamId + ",CHOSE TO BAT";
+						option.text = match_data.setup.homeTeam.teamName1 + ",CHOSE TO BAT";
+						select.appendChild(option);
+
+						option = document.createElement('option');
+						option.value =match_data.setup.awayTeam.teamId + ",CHOSE TO BAT";
+						option.text = match_data.setup.awayTeam.teamName1 + ",CHOSE TO BAT";
+						select.appendChild(option);
+						
+						option = document.createElement('option');
+						option.value = match_data.setup.homeTeam.teamId + ",CHOSE TO FIELD";
+						option.text = match_data.setup.homeTeam.teamName1 + ",CHOSE TO FIELD";
+						select.appendChild(option);
+
+						option = document.createElement('option');
+						option.value =match_data.setup.awayTeam.teamId + ",CHOSE TO FIELD";
+						option.text = match_data.setup.awayTeam.teamName1 + ",CHOSE TO FIELD";
+						select.appendChild(option);
+
+					    row.insertCell(0).appendChild(select);
+
+						select = document.createElement('input');
+						select.type = "text";
+						select.id = 'savePointsTable';
+						select.value = '';
+						
+						header_text = document.createElement('label');
+						header_text.innerHTML = 'Page No.';
+						header_text.htmlFor = select.id;
+						
+						row.insertCell(1).appendChild(header_text).appendChild(select);
+						
+						option = document.createElement('input');
+					    option.type = 'button';
+						option.name = 'populate_graphics_toss';
+						option.value = 'populate';
+					    option.id = option.name;
+					    option.setAttribute('onclick',"processUserSelection(this)");
+					    
+					    div = document.createElement('div');
+					    div.append(option);
+					
+						option = document.createElement('input');
+						option.type = 'button';
+						option.name = 'cancel_graphics_btn';
+						option.id = option.name;
+						option.value = 'Cancel';
+						option.setAttribute('onclick','processUserSelection(this)');
+					
+					    div.append(option);
+					    
+					    row.insertCell(2).appendChild(div);
+					    
+						document.getElementById('select_graphic_options_div').style.display = '';
+							break;	
+					case 'LAST_XOVERS_OPTIONSS':
+						    select = document.createElement('select');
+						    select.id = 'selectOvernumber';
+						    select.name = select.id;
+						    console.log(dataToProcess);
+
+							// ✅ Build uniqueOvers skipping index 0
+							let uniqueOvers = [];
+							dataToProcess.forEach(function(oop, index) {
+							    if(index === 0) return; // Skip first index (Over 0)
+							    uniqueOvers.push(oop);
+							});
+
+							uniqueOvers.forEach(function(oop, index){
+							    option = document.createElement('option');
+							    option.value = index + 1;
+
+							    // ✅ CRR detection works for BOTH innings:
+							    // Inning 1: last two entries have same overNumber (e.g. 7,7)
+							    // Inning 2: last entry overNumber resets to 0 (less than previous)
+							    let isLastEntry = (index === uniqueOvers.length - 1);
+							    let isSameAsPrev = isLastEntry && index > 0 && 
+							                       (uniqueOvers[index].overNumber === uniqueOvers[index-1].overNumber);
+							    let isResetOver  = isLastEntry && index > 0 && 
+							                       (uniqueOvers[index].overNumber < uniqueOvers[index-1].overNumber);
+
+							    let isCurrentOver = isSameAsPrev || isResetOver;
+
+							    if(isCurrentOver) {
+							        option.text = 'CRR - Runs: ' + oop.overTotalRuns + ' - Wickets: ' + oop.overTotalWickets;
+							        option.selected = true;
+							    } else {
+							        option.text = 'Over ' + (index + 1) + ' - Runs: ' + oop.overTotalRuns + ' - Wickets: ' + oop.overTotalWickets;
+							    }
+
+							    select.appendChild(option);
+							});
+
+						    row.insertCell(0).appendChild(select);
+
+						    select = document.createElement('input');
+						    select.type = "text";
+						    select.id = 'savePointsTable';
+						    select.value = '';
+
+						    header_text = document.createElement('label');
+						    header_text.innerHTML = 'Page No.';
+						    header_text.htmlFor = select.id;
+
+						    row.insertCell(1).appendChild(header_text).appendChild(select);
+
+						    option = document.createElement('input');
+						    option.type = 'button';
+						    option.name = 'LAST_XBALL_GFX';
+						    option.value = 'populate';
+						    option.id = option.name;
+						    option.setAttribute('onclick', "processUserSelection(this)");
+
+						    div = document.createElement('div');
+						    div.append(option);
+
+						    option = document.createElement('input');
+						    option.type = 'button';
+						    option.name = 'cancel_graphics_btn';
+						    option.id = option.name;
+						    option.value = 'Cancel';
+						    option.setAttribute('onclick', 'processUserSelection(this)');
+
+						    div.append(option);
+						    row.insertCell(2).appendChild(div);
+
+						    document.getElementById('select_graphic_options_div').style.display = '';
+						    break;	
 						case 'FIXTURE_OPTIONS':
 							select = document.createElement('select');
 							select.id = 'selectTeam';
@@ -2748,7 +2981,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 						    document.getElementById('select_graphic_options_div').style.display = '';
 						    break; 
 					case 'ISPL_NEXT_BAT_OPTIONS':case'ISPL_COMPARISION_OPTIONS':case 'POPULATE_FF_CURRENT_MATCH_SUMMARY': 
-					case "ISPL_TARGET_OPTIONS": case "ISPL_TOSS_OPTIONS": case "ISPL_EQUATION_OPTIONS": case "ISPL_MVP_OPTIONS": case "ISPL_MVP_OPTIONS_LEADERBOARD": case "RUN_RATE-OPTION":
+					case "ISPL_TARGET_OPTIONS": case "VICTORY_OPTIONS": case "ISPL_EQUATION_OPTIONS": case "ISPL_MVP_OPTIONS": case "ISPL_MVP_OPTIONS_LEADERBOARD": case "RUN_RATE-OPTION":
 					 case "MATCHID_OPTIONS":  case "ISPL_BOUNDARIES_OPTIONS": case "ISPL_POJECTED_OPTIONS":  case "POPULATE_PARTNERSHIP": case "LINEUP_GRAPHIC_OPTIONS":
 					 	select = document.createElement('input');
 						select.type = "text";
@@ -2821,10 +3054,14 @@ function addItemsToList(whatToProcess, dataToProcess)
 						    option.name = 'populate_equation';
 							option.value = 'populate';
 							break;
-						case "ISPL_TOSS_OPTIONS":
+						/*case "ISPL_TOSS_OPTIONS":
 							option.name = 'populate_graphics_toss';
 							option.value = 'populate';
-							break;
+							break;*/
+						case "VICTORY_OPTIONS":
+							option.name = 'populate_graphics_victory';
+							option.value = 'populate';
+							break;	
 						case "ISPL_TARGET_OPTIONS":
 							option.name = 'populate_graphics_target';
 							option.value = 'populate';

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.eclipse.tags.shaded.org.apache.xalan.xsltc.compiler.sym;
 
 import com.cricket.config.DatabaseContextHolder;
 import com.cricket.containers.Scene;
@@ -27,6 +28,7 @@ import com.cricket.model.HeadToHead;
 import com.cricket.model.Inning;
 import com.cricket.model.Match;
 import com.cricket.model.MatchAllData;
+import com.cricket.model.OverByOverData;
 import com.cricket.model.Player;
 import com.cricket.model.Setup;
 import com.cricket.model.Statistics;
@@ -37,6 +39,24 @@ import com.cricket.service.CricketService;
 import com.cricket.util.CricketFunctions;
 import com.cricket.util.CricketUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.io.StringReader;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 public class DOAD_TRIO extends Scene{
 	
@@ -67,11 +87,14 @@ public class DOAD_TRIO extends Scene{
 	public Tournament tournament2;
 	public List<String> this_data_str = new ArrayList<String>();
 	
+	private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
+		    .connectTimeout(Duration.ofSeconds(5)).build();
+	
 	double average = 0 ,average2 =0;
 	String Data = "",hundred = "",fifty = "",strikeRate = "", thirty = "",
 		batAverage = "",economy = "",best = "",runs = "",short_name = "", surName = "",profile ="",debut1 = "",debut2 = "" ,debut = "",debut3 ="";
 	String Data2 = "",strikeRate2 = "", runs2 = "",  best2 = "",whichprofile,
-			batAverage2 = "";
+			batAverage2 = "",pageName = "";
 	
 	public DOAD_TRIO() {
 		super();
@@ -83,7 +106,7 @@ public class DOAD_TRIO extends Scene{
 	}
 
 	public Object ProcessGraphicOption(String whatToProcess, CricketService cricketService, MatchAllData match, PrintWriter print_writer, 
-		HeadToHead headToHead, List<Tournament> pasttornament,List<BestStats> tapeball, String valueToProcess, String category) throws Exception
+		HeadToHead headToHead, List<Tournament> pasttornament,List<BestStats> tapeball, String valueToProcess, String category,String ipAddress,String showname) throws Exception
 	{
 		switch(whatToProcess.toUpperCase()) {
 		//Load Scene
@@ -169,76 +192,128 @@ public class DOAD_TRIO extends Scene{
 //				DoadWriteToTrio(print_writer, "read_template Comparison-Drone");
 //			}
 //			
-//			populateComparison(print_writer, match);
+//			populateComparison(print_writer, match,category);
 //			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
 //			break;
-		case "POPULATE_GRAPHICS_COMPARISION":
-		    String template = valueToProcess.split(",")[1].equalsIgnoreCase("AR") 
-		        ? "read_template Comparison" 
-		        : "read_template Comparison-Drone";
+//		case "POPULATE_GRAPHICS_LASTXOVERS":
+//			DoadWriteToTrio(print_writer, "read_template RunsAndBall");
+//			
+//			populateLastxovers(print_writer, match, Integer.valueOf(valueToProcess.split(",")[0]) ,category);
+//			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[1]);
+//			break;
+		case "POPULATE_GRAPHICS_LASTXOVERS":
+		   sendVizMSELastXOversPage(
+		    		valueToProcess.split(",")[1],
+		            match,
+		            Integer.parseInt(valueToProcess.split(",")[0]),
+		            ipAddress,
+		            showname);
 
-		    Inning inning2 = match.getMatch().getInning().get(1);
-		    boolean homeIsBatting = match.getSetup().getHomeTeamId() == inning2.getBattingTeamId();
-
-		    StringBuilder sb = new StringBuilder();
-		    sb.append(valueToProcess.split(",")[1].equalsIgnoreCase("AR") ? "read_template Comparison" : "read_template Comparison-Drone").append(return_key).append(line_feed);
-		    sb.append("tabfield:set_value_no_update 001-TEAMNAME ").append(homeIsBatting ? match.getSetup().getAwayTeam().getTeamBadge() : match.getSetup().getHomeTeam().getTeamBadge()).append(return_key).append(line_feed);
-		    sb.append("tabfield:set_value_no_update 002-TEAMNAME02 ").append(homeIsBatting ? match.getSetup().getHomeTeam().getTeamBadge() : match.getSetup().getAwayTeam().getTeamBadge()).append(return_key).append(line_feed);
-		    sb.append("tabfield:set_value_no_update 003-Header AFTER ").append(CricketFunctions.OverBalls(inning2.getTotalOvers(), inning2.getTotalBalls())).append(" OVERS").append(return_key).append(line_feed);
-		    sb.append("tabfield:set_value_no_update 101-RUNS01 ").append(IndexController.MatchStats.getInningCompare().getTotalRuns()).append("-").append(IndexController.MatchStats.getInningCompare().getTotalWickets()).append(return_key).append(line_feed);
-		    sb.append("tabfield:set_value_no_update 102-RUNS02 ").append(inning2.getTotalRuns()).append("-").append(inning2.getTotalWickets()).append(return_key).append(line_feed);
-		    sb.append("saveas ").append(valueToProcess.split(",")[0]).append(return_key).append(line_feed);
-
-		    print_writer.print(sb.toString());
-		    print_writer.flush();
 		    break;
+			
+//		case "POPULATE_GRAPHICS_COMPARISION":
+//		    String template = valueToProcess.split(",")[1].equalsIgnoreCase("AR") 
+//		        ? "read_template Comparison" 
+//		        : "read_template Comparison-Drone";
+//
+//		    Inning inning2 = match.getMatch().getInning().get(1);
+//		    boolean homeIsBatting = match.getSetup().getHomeTeamId() == inning2.getBattingTeamId();
+//		    System.out.println( "category.toUpperCase()= "+ category.toUpperCase());
+//		    DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " + category.toUpperCase());
+//		    StringBuilder sb = new StringBuilder();
+//		    sb.append(valueToProcess.split(",")[1].equalsIgnoreCase("AR") ? "read_template Comparison" : "read_template Comparison-Drone").append(return_key).append(line_feed);
+//		    sb.append("tabfield:set_value_no_update 001-TEAMNAME ").append(homeIsBatting ? match.getSetup().getAwayTeam().getTeamBadge() : match.getSetup().getHomeTeam().getTeamBadge()).append(return_key).append(line_feed);
+//		    sb.append("tabfield:set_value_no_update 002-TEAMNAME02 ").append(homeIsBatting ? match.getSetup().getHomeTeam().getTeamBadge() : match.getSetup().getAwayTeam().getTeamBadge()).append(return_key).append(line_feed);
+//		    sb.append("tabfield:set_value_no_update 003-Header AFTER ").append(CricketFunctions.OverBalls(inning2.getTotalOvers(), inning2.getTotalBalls())).append(" OVERS").append(return_key).append(line_feed);
+//		    sb.append("tabfield:set_value_no_update 101-RUNS01 ").append(IndexController.MatchStats.getInningCompare().getTotalRuns()).append("-").append(IndexController.MatchStats.getInningCompare().getTotalWickets()).append(return_key).append(line_feed);
+//		    sb.append("tabfield:set_value_no_update 102-RUNS02 ").append(inning2.getTotalRuns()).append("-").append(inning2.getTotalWickets()).append(return_key).append(line_feed);
+//		    sb.append("saveas ").append(valueToProcess.split(",")[0]).append(return_key).append(line_feed);
+//
+//		    print_writer.print(sb.toString());
+//		    print_writer.flush();
+//		    break;
+//		case "POPULATE_GRAPHICS_TARGET":
+//			if(valueToProcess.split(",")[1].equalsIgnoreCase("AR")){
+//				DoadWriteToTrio(print_writer, "read_template Target");
+//			}else {
+//				DoadWriteToTrio(print_writer, "read_template Target_Drone");
+//			}
+//			
+//			populateTarget(print_writer, match,category);
+//			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
+//			break;
 		case "POPULATE_GRAPHICS_TARGET":
-			if(valueToProcess.split(",")[1].equalsIgnoreCase("AR")){
-				DoadWriteToTrio(print_writer, "read_template Target");
-			}else {
-				DoadWriteToTrio(print_writer, "read_template Target_Drone");
-			}
-			
-			populateTarget(print_writer, match);
-			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
-			break;
+		    sendVizMSETargetPage(valueToProcess.split(",")[0], match, ipAddress, showname);
+		    break;
+//		case "POPULATE_GRAPHICS_PROJECTED":
+//			if(valueToProcess.split(",")[1].equalsIgnoreCase("AR")){
+//				DoadWriteToTrio(print_writer, "read_template Projected");
+//			}else {
+//				DoadWriteToTrio(print_writer, "read_template Projected_Score_Drone");
+//			}
+//			
+//			populateProjected(print_writer, match,category);
+//			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
+//			break;
 		case "POPULATE_GRAPHICS_PROJECTED":
-			if(valueToProcess.split(",")[1].equalsIgnoreCase("AR")){
-				DoadWriteToTrio(print_writer, "read_template Projected");
-			}else {
-				DoadWriteToTrio(print_writer, "read_template Projected_Score_Drone");
-			}
-			
-			populateProjected(print_writer, match);
-			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
-			break;
+		    sendVizMSEProjectedPage(valueToProcess.split(",")[0], match, ipAddress, showname);
+		    break;
+//		case "POPULATE-LASTXBALLS_VR":
+//			if(valueToProcess.split(",")[1].equalsIgnoreCase("AR")){
+//				DoadWriteToTrio(print_writer, "read_template RunsAndBall");
+//			}else {
+//				DoadWriteToTrio(print_writer, "read_template RunsAndBall");
+//			}
+//			
+//			populateLASTXBALLS(print_writer, match,Integer.valueOf(valueToProcess.split(",")[0]));
+//			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[2]);
+//			break;	
 		case "POPULATE-LASTXBALLS_VR":
-			if(valueToProcess.split(",")[1].equalsIgnoreCase("AR")){
-				DoadWriteToTrio(print_writer, "read_template LastXBalls");
-			}else {
-				DoadWriteToTrio(print_writer, "read_template LastXBalls_Drone");
-			}
-			
-			populateLASTXBALLS(print_writer, match,Integer.valueOf(valueToProcess.split(",")[0]));
-			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[2]);
-			break;	
+		    sendVizMSELastXBallsPage(
+		    		valueToProcess.split(",")[2],
+		            match,
+		            Integer.parseInt(valueToProcess.split(",")[0]),
+		            ipAddress,
+		            showname);
+
+		    break;
+//		case "POPULATE_GRAPHICS_TOSS":
+//			DoadWriteToTrio(print_writer, "read_template TOSS");
+//			populateToss(print_writer, match,category, Integer.parseInt(valueToProcess.split(",")[0]),valueToProcess.split(",")[1]);
+//			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[2]);
+//			break;
 		case "POPULATE_GRAPHICS_TOSS":
-			if(valueToProcess.split(",")[1].equalsIgnoreCase("AR")){
-				DoadWriteToTrio(print_writer, "read_template Toss");
-			}else {
-				DoadWriteToTrio(print_writer, "read_template Toss_Drone");
-			}
+
+		    sendVizMSETossPage(
+		    		valueToProcess.split(",")[2],
+		            match,
+		            Integer.parseInt(valueToProcess.split(",")[0]),
+		            valueToProcess.split(",")[1],
+		            ipAddress,
+		            showname);
+
+		    break;
+//		case "POPULATE_GRAPHICS_VCTORYY":
+//			if(valueToProcess.split(",")[1].equalsIgnoreCase("AR")){
+//				DoadWriteToTrio(print_writer, "read_template Victory");
+//			}else {
+//				DoadWriteToTrio(print_writer, "read_template Toss_Drone");
+//			}
+//			
+//			populateVictory(print_writer, match,category);
+//			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
+//			break;
 			
-			populateToss(print_writer, match);
-			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
-			break;
+		case "POPULATE_GRAPHICS_VCTORYY":
+		    sendVizMSEVictoryPage(valueToProcess.split(",")[0], match, ipAddress, showname);
+		    break;
 		case "POPULATE_GRAPHICS_MATCHID":
 			if(valueToProcess.split(",")[1].equalsIgnoreCase("AR")){
 				DoadWriteToTrio(print_writer, "read_template Ident");
 			}else {
 				DoadWriteToTrio(print_writer, "read_template MatchID_Drone");
 			}
-			populateMatchID(print_writer, match,cricketService);
+			populateMatchID(print_writer, match,cricketService,category);
 			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
 			break;
 		case "POPULATE_GRAPHICS_UPLINE":
@@ -259,21 +334,39 @@ public class DOAD_TRIO extends Scene{
 			populatePARTNERSHIP(print_writer, match,cricketService);
 			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
 			break;
+//		case "POPULATE_GRAPHICS_MOSTRUNS":
+//			tournament_stats = new ArrayList<Tournament>();
+//			tournament_stats = CricketFunctions.extractTournamentData("CURRENT_MATCH_DATA", false, headToHead.getH2hPlayer(), cricketService, 
+//					match, pasttornament);
+//			//System.out.println( "pastdata" +  pasttornament.size());
+//			Collections.sort(tournament_stats,new CricketFunctions.BatsmenMostRunComparator());
+//			if(valueToProcess.split(",")[1].equalsIgnoreCase("AR")){
+//				DoadWriteToTrio(print_writer, "read_template Leaderboard");
+//			}else {
+//				DoadWriteToTrio(print_writer, "read_template Leaderboard");
+//			}
+//			populateMOSTRUNS(print_writer, match,cricketService,tournament_stats,valueToProcess.split(",")[2],category);
+//			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
+//			break;
+			
 		case "POPULATE_GRAPHICS_MOSTRUNS":
+
+		    tournament_stats = CricketFunctions.extractTournamentData("CURRENT_MATCH_DATA",false,headToHead.getH2hPlayer(),cricketService,
+		            match,pasttornament);
+
+		    Collections.sort(tournament_stats,new CricketFunctions.BatsmenMostRunComparator()
+		    );
+
+		    sendVizMSEMostRunsPage( valueToProcess.split(",")[0],match,tournament_stats,cricketService,category,ipAddress,showname);
+
+		    break;	
+		case "POPULATE_GRAPHICS_MOSTWKTS":
 			tournament_stats = new ArrayList<Tournament>();
 			tournament_stats = CricketFunctions.extractTournamentData("CURRENT_MATCH_DATA", false, headToHead.getH2hPlayer(), cricketService, 
 					match, pasttornament);
-			//System.out.println( "pastdata" +  pasttornament.size());
-			Collections.sort(tournament_stats,new CricketFunctions.BatsmenMostRunComparator());
-			if(valueToProcess.split(",")[1].equalsIgnoreCase("AR")){
-				DoadWriteToTrio(print_writer, "read_template LeaderBoard_ActionImage");
-			}else {
-				DoadWriteToTrio(print_writer, "read_template LeaderBoard_ActionImage_Drone");
-			}
-			populateMOSTRUNS(print_writer, match,cricketService,tournament_stats,valueToProcess.split(",")[2]);
-			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
-			break;
-			
+			Collections.sort(tournament_stats,new CricketFunctions.BowlerWicketsComparator());
+			sendVizMSEMostWicketsPage(valueToProcess.split(",")[0],match,tournament_stats,cricketService,category,ipAddress,showname);
+			break;	 
 		case "POPULATE_GRAPHICS_TAPEBALL":
 			List<BestStats> tapeball1 = new ArrayList<BestStats>();
 			tapeball1 = CricketFunctions.extractTapeData("CURRENT_MATCH_DATA", cricketService, match, tapeball, headToHead.getH2hPlayer());
@@ -286,19 +379,7 @@ public class DOAD_TRIO extends Scene{
 			populateTapeBallMostWickets(print_writer, match,cricketService,tapeball1,valueToProcess.split(",")[2]);
 			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
 			break;	
-		case "POPULATE_GRAPHICS_MOSTWKTS":
-			tournament_stats = new ArrayList<Tournament>();
-			tournament_stats = CricketFunctions.extractTournamentData("CURRENT_MATCH_DATA", false, headToHead.getH2hPlayer(), cricketService, 
-					match, pasttornament);
-			Collections.sort(tournament_stats,new CricketFunctions.BowlerWicketsComparator());
-			if(valueToProcess.split(",")[1].equalsIgnoreCase("AR")){
-				DoadWriteToTrio(print_writer, "read_template LeaderBoard_ActionImage");
-			}else {
-				DoadWriteToTrio(print_writer, "read_template LeaderBoard_ActionImage_Drone");
-			}
-			populateMOSTWKTS(print_writer, match,cricketService,tournament_stats,valueToProcess.split(",")[2]);
-			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
-			break;	
+		
 		case "POPULATE_GRAPHICS_MOSTNINE":
 			tournament_stats = new ArrayList<Tournament>();
 			tournament_stats = CricketFunctions.extractTournamentData("CURRENT_MATCH_DATA", false, headToHead.getH2hPlayer(), cricketService, 
@@ -338,16 +419,28 @@ public class DOAD_TRIO extends Scene{
 			populateMOSTSIXES(print_writer, match,cricketService,tournament_stats,valueToProcess.split(",")[2]);
 			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
 			break;			
-		case "POPULATE_GRAPHICS_EQUATION":
-			if(valueToProcess.split(",")[1].equalsIgnoreCase("AR")){
-				DoadWriteToTrio(print_writer, "read_template RunsAndBall");
-			}else {
-				DoadWriteToTrio(print_writer, "read_template Equation_Drone");
-			}
+//		case "POPULATE_GRAPHICS_EQUATION":
+//			if(valueToProcess.split(",")[1].equalsIgnoreCase("AR")){
+//				DoadWriteToTrio(print_writer, "read_template RunsAndBall");
+//			}else {
+//				DoadWriteToTrio(print_writer, "read_template Equation_Drone");
+//			}
+//			
+//			populateEquation(print_writer, match,IndexController.headToHead,category);
+//			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
+//			break;
 			
-			populateEquation(print_writer, match,IndexController.headToHead);
-			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
-			break;
+		case "POPULATE_GRAPHICS_EQUATION":
+		    sendVizMSEEquationPage(valueToProcess.split(",")[0], match,ipAddress,showname);
+		    break;
+		case "POPULATE_GRAPHICS_BOUNDARIES":
+		    sendVizMSEBoundaryPage(valueToProcess.split(",")[0], match, Integer.valueOf(valueToProcess.split(",")[1]),ipAddress,showname);
+		    break;
+		case "POPULATE_GRAPHICS_COMPARISION":
+		    sendVizMSEComparisonPage(valueToProcess.split(",")[0], match, ipAddress, showname);
+		    break;
+			
+			 
 		case "POPULATE_GRAPHICS_MVP":
 			if(new File(mainCricketDirectory + CricketUtil.MVP).exists()) {
 				mvp = (new ObjectMapper().readValue(new File(secondCricketDirectory + CricketUtil.MVP), mvp_leaderBoard.class));
@@ -376,21 +469,26 @@ public class DOAD_TRIO extends Scene{
 			populateMVPLEADERBOARD(print_writer, match,cricketService);
 			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
 			break;
+//		case "POPULATE_GRAPHICS_REQUIREDRUNRATE":
+//			if(valueToProcess.split(",")[1].equalsIgnoreCase("AR")){
+//				DoadWriteToTrio(print_writer, "read_template RunsAndBall");
+//			}else {
+//				DoadWriteToTrio(print_writer, "read_template RunRates_Drone");
+//			}
+//			
+//			populateRUNRATE(print_writer, match,cricketService,category);
+//			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
+//			break;
 		case "POPULATE_GRAPHICS_REQUIREDRUNRATE":
-			if(valueToProcess.split(",")[1].equalsIgnoreCase("AR")){
-				DoadWriteToTrio(print_writer, "read_template RunsAndBall");
-			}else {
-				DoadWriteToTrio(print_writer, "read_template RunRates_Drone");
-			}
+		    sendVizMSERunRatePage(valueToProcess.split(",")[0], match, cricketService, ipAddress, showname);
+		    break;	
 			
-			populateRUNRATE(print_writer, match,cricketService);
-			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
-			break;
-		case "POPULATE_GRAPHICS_BOUNDARIES":
-			DoadWriteToTrio(print_writer, "read_template RunsAndBall");
-			populateBoundaries(print_writer, match,cricketService,Integer.valueOf(valueToProcess.split(",")[1]));
-			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
-			break;
+		
+//		case "POPULATE_GRAPHICS_BOUNDARIES":
+//			DoadWriteToTrio(print_writer, "read_template RunsAndBall");
+//			populateBoundaries(print_writer, match,cricketService,Integer.valueOf(valueToProcess.split(",")[1]),category);
+//			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
+//			break;
 			
 //		case "POPULATE_GRAPHICS_BOUNDARIES":
 //		    String[] parts = valueToProcess.split(",");
@@ -1701,11 +1799,14 @@ public class DOAD_TRIO extends Scene{
 			populateFixture(print_writer, match, cricketService, Integer.valueOf(valueToProcess.split(",")[0]));
 			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[1]);
 			break;	
-		case"POPULATE_GRAPHICS_NEXT_TO_BAT":
-			DoadWriteToTrio(print_writer, "read_template NextToBat");
-			populateNextToBat(print_writer,match, cricketService);
-			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
-			break;
+//		case"POPULATE_GRAPHICS_NEXT_TO_BAT":
+//			DoadWriteToTrio(print_writer, "read_template Next3");
+//			populateNextToBat(print_writer,match, cricketService,category);
+//			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[0]);
+//			break;
+		case "POPULATE_GRAPHICS_NEXT_TO_BAT":
+		    sendVizMSENextToBatPage(valueToProcess.split(",")[0], match, cricketService, category, ipAddress, showname);
+		    break;	
 		case "POPULATE_GRAPHICS_LINEUP":	
 			DoadWriteToTrio(print_writer, "read_template LineUp_2Teams_WithChangeOns");
 			populateLineUp(print_writer,match, cricketService,Integer.valueOf(valueToProcess.split(",")[0]));
@@ -1729,6 +1830,7 @@ public class DOAD_TRIO extends Scene{
 	private void popualteIspl_MATCH_SUMMARY(PrintWriter print_writer, MatchAllData previous_match, CricketService cricketService) throws Exception {		
 		//HEADER
 		List<String> inningData  = new ArrayList<>();
+		
 		inningData.add("tabfield:set_value_no_update 001-TEAM-REF-NAME-1 " +  (previous_match.getSetup().getHomeTeamId()== 
 				previous_match.getMatch().getInning().get(0).getBattingTeamId()? 
 						previous_match.getSetup().getHomeTeam().getTeamName1():previous_match.getSetup().getAwayTeam().getTeamName1()));
@@ -2154,139 +2256,437 @@ public class DOAD_TRIO extends Scene{
 		}
 		DoadWriteToTrio(print_writer,  "tabfield:set_value_no_update 004-PLAYER-IMAGE \"" + photo + "\"");
 	}
- 	private void populateComparison(PrintWriter print_writer,MatchAllData match) {
- 		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAM-REF-NAME-1 " + (match.getSetup().getHomeTeamId()==
- 				 match.getMatch().getInning().get(1).getBowlingTeamId() ? match.getSetup().getHomeTeam().getTeamName4() : match.getSetup().getAwayTeam().getTeamName4() ));
-		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-TEAM-REF-NAME-2 "+(match.getSetup().getHomeTeamId()==
- 				 match.getMatch().getInning().get(1).getBattingTeamId() ? match.getSetup().getHomeTeam().getTeamName4() : match.getSetup().getAwayTeam().getTeamName4() ));			 
-		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-MATCH-NUMBER "+"AFTER "+
-		 CricketFunctions.OverBalls(match.getMatch().getInning().get(1).getTotalOvers(), match.getMatch().getInning().get(1).getTotalBalls())+" OVERS");
-		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-DATA01 "+ IndexController.MatchStats.getInningCompare().getTotalRuns() + "-"+ 
-		 IndexController.MatchStats.getInningCompare().getTotalWickets());
-		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-DATA02 "+ match.getMatch().getInning().get(1).getTotalRuns() + "-"+ match.getMatch().getInning().get(1).getTotalWickets());
-	}
 	
-//	private void populateComparison(PrintWriter print_writer, MatchAllData match) {
-//	    
-//	    Inning inning2 = match.getMatch().getInning().get(1);
-//	    
-//	    boolean homeIsBatting = match.getSetup().getHomeTeamId() == inning2.getBattingTeamId();
-//	    
-//	    String team1Name = homeIsBatting 
-//	        ? match.getSetup().getAwayTeam().getTeamName4() 
-//	        : match.getSetup().getHomeTeam().getTeamName4();
-//	    
-//	    String team2Name = homeIsBatting 
-//	        ? match.getSetup().getHomeTeam().getTeamName4() 
-//	        : match.getSetup().getAwayTeam().getTeamName4();
+	
+	
+// 	private void populateComparison(PrintWriter print_writer,MatchAllData match,String cat) {
+// 		
+// 		
+// 		for(Inning inn : match.getMatch().getInning()) {
+//			if (inn.getIsCurrentInning().toUpperCase().equalsIgnoreCase(CricketUtil.YES)) {
+//		//		System.out.println("cat.toUpperCase()" + cat.toUpperCase());
+//			//	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " + cat.toUpperCase());
+//				
+////				DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " +
+////					    (cat.equalsIgnoreCase("MEN") ? "MENS" : "WOMENS"));
+//				
+//				DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME " +  inn.getBowling_team().getTeamBadge());
 //
-//	    String[] commands = {
-//	        "tabfield:set_value_no_update 001-TEAM-REF-NAME-1 " + team1Name,
-//	        "tabfield:set_value_no_update 002-TEAM-REF-NAME-2 " + team2Name,
-//	        "tabfield:set_value_no_update 000-MATCH-NUMBER AFTER " + CricketFunctions.OverBalls(inning2.getTotalOvers(), inning2.getTotalBalls()) + " OVERS",
-//	        "tabfield:set_value_no_update 002-DATA01 " + IndexController.MatchStats.getInningCompare().getTotalRuns() + "-" + IndexController.MatchStats.getInningCompare().getTotalWickets(),
-//	        "tabfield:set_value_no_update 002-DATA02 " + inning2.getTotalRuns() + "-" + inning2.getTotalWickets()
-//	    };
+// 			DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-TEAMNAME02 " + inn.getBatting_team().getTeamBadge());
+// 			
+// 			Inning inning2 = match.getMatch().getInning().get(1);
+// 		   // boolean homeIsBatting = match.getSetup().getHomeTeamId() == inning2.getBattingTeamId();	
+// 	 		
+// 	 		
 //
-//	    DoadWriteToTrio(print_writer, String.join("\n", commands));
-//	}
-// 	private void populateTarget(PrintWriter print_writer,MatchAllData match) {
-// 		//targetrun
-// 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-TARGET "+  CricketFunctions.GetTargetData(match).getTargetRuns());
+// 	 			DoadWriteToTrio(print_writer,"tabfield:set_value_no_update 003-Header AFTER " + CricketFunctions.OverBalls(
+// 	 			            inning2.getTotalOvers(),
+// 	 			            inning2.getTotalBalls()) + " OVERS");
+//
+// 	 			DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-RUNS01 " + IndexController.MatchStats.getInningCompare().getTotalRuns()
+// 	 			        + "-" + IndexController.MatchStats.getInningCompare().getTotalWickets());
+//
+// 	 			DoadWriteToTrio(print_writer,"tabfield:set_value_no_update 102-RUNS02 "
+// 	 			        + inning2.getTotalRuns()+ "-" + inning2.getTotalWickets());
+//			}
+//			}
 // 		
-// 		//teamname
-// 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-TeamRefName "+ match.getMatch().getInning().get(1).getBatting_team().getTeamBadge());
-// 		
-// 		//Target
-// 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TARGET-HEAD "+  "TARGET");
-// 		
-//	}
- 	
- 	private void populateTarget(PrintWriter print_writer, MatchAllData match) {
- 	    
- 	    StringBuilder sb = new StringBuilder();
- 	    System.out.println("match.getMatch().getInning().get(1).getBatting_team().getTeamBadge()" +match.getMatch().getInning().get(1).getBatting_team().getTeamBadge());
- 	    sb.append("tabfield:set_value_no_update 001-TARGET ").append(CricketFunctions.GetTargetData(match).getTargetRuns()).append(return_key).append(line_feed);
- 	    sb.append("tabfield:set_value_no_update 001-TEAMNAME ").append(match.getMatch().getInning().get(1).getBatting_team().getTeamBadge()).append(return_key).append(line_feed);
- 	    sb.append("tabfield:set_value_no_update 003-Header TARGET").append(return_key).append(line_feed);
+// 		}
+	private void sendVizMSEComparisonPage(String pageName,
+            MatchAllData match,
+            String ipAddress,
+            String showName) {
 
- 	    print_writer.print(sb.toString());
- 	    print_writer.flush();
- 	}
- 	private void populateLASTXBALLS(PrintWriter print_writer,MatchAllData match,int ballno) {
- 		
- 		this_data_str = new ArrayList<String>();
-		this_data_str.add(CricketFunctions.getlastthirtyballsdata(match, "-", match.getEventFile().getEvents(), ballno));	
+		String[] urls = getShowIdAndURL(pageName,
+		match,ipAddress,"Comparison",showName);
 		
+		String modelUrl = urls[0];
+		String putUrl   = urls[1];
 		
-		for(Inning inn : match.getMatch().getInning()) {
-			if(inn.getIsCurrentInning().equalsIgnoreCase("YES")) {
-				DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-TeamRefName "+ inn.getBatting_team().getTeamBadge());
-			}
+		String team1Logo = "";
+		String team2Logo = "";
+		String header = "";
+		
+		String score1 = "";
+		String score2 = "";
+		
+		Inning inning2 = match.getMatch().getInning().get(1);
+		
+		for (Inning inn : match.getMatch().getInning()) {
+		
+		if (CricketUtil.YES.equalsIgnoreCase(inn.getIsCurrentInning())) {
+		
+		team1Logo = inn.getBowling_team().getTeamBadge();
+		team2Logo = inn.getBatting_team().getTeamBadge();
+		
+		header = "AFTER "
+		+ CricketFunctions.OverBalls(
+		  inning2.getTotalOvers(),
+		  inning2.getTotalBalls())
+		+ " OVERS";
+		
+		score1 = IndexController.MatchStats
+		.getInningCompare()
+		.getTotalRuns()
+		+ "-"
+		+ IndexController.MatchStats
+		.getInningCompare()
+		.getTotalWickets();
+		
+		score2 = inning2.getTotalRuns()
+		+ "-"
+		+ inning2.getTotalWickets();
+		
+		break;
+		}
 		}
 		
-		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update  401-HEADER " + "LAST " + ballno + " BALLS");
+		String payloadXml =
+		"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		+ "<payload xmlns=\"http://www.vizrt.com/types\"\n"
+		+ "         model=\"" + modelUrl + "\">\n"
 		
-		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-HEAD "+  "RUN"  + 
-				CricketFunctions.Plural(Integer.valueOf(this_data_str.get(this_data_str.size()-1).split("-")[0])).toUpperCase());
+		+ "  <field name=\"001-TEAMNAME\">"
+		+ "<value>" + team1Logo + "</value></field>\n"
 		
-		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-DATA01 "+  Integer.valueOf(this_data_str.get(this_data_str.size()-1).split("-")[0]));
+		+ "  <field name=\"002-TEAMNAME02\">"
+		+ "<value>" + team2Logo + "</value></field>\n"
 		
-		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 004-HEAD "+  "WICKET" + 
-				CricketFunctions.Plural(Integer.valueOf(this_data_str.get(this_data_str.size()-1).split("-")[1])).toUpperCase());
-		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 005-DATA01 "+  Integer.valueOf(this_data_str.get(this_data_str.size()-1).split("-")[1]));
- 	}
- 	private void populateProjected(PrintWriter print_writer,MatchAllData match) {
- 		
- 		String[] proj_score_rate = new String[CricketFunctions.projectedScore(match).size()];
-	    for (int i = 0; i < CricketFunctions.projectedScore(match).size(); i++) {
-	    	proj_score_rate[i] = CricketFunctions.projectedScore(match).get(i);
-	    	//System.out.println(proj_score_rate[i]);
-        }	
- 		for(Inning inn : match.getMatch().getInning()) {
-			
-			
-			if(inn.getInningNumber() == 1 & inn.getIsCurrentInning().equalsIgnoreCase("YES")) {
+		+ "  <field name=\"003-Header\">"
+		+ "<value>" + header + "</value></field>\n"
+		
+		+ "  <field name=\"101-RUNS01\">"
+		+ "<value>" + score1 + "</value></field>\n"
+		
+		+ "  <field name=\"102-RUNS02\">"
+		+ "<value>" + score2 + "</value></field>\n"
+		
+		+ "</payload>";
+		
+		putMethod(putUrl, payloadXml);
+		}
+ 	
+
+ 	
+// 	private void populateTarget(PrintWriter print_writer, MatchAllData match,String cat) {
+// 	    
+// 		
+// 	//	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " + cat.toUpperCase());
+// 		
+//// 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " +
+////			    (cat.equalsIgnoreCase("MEN") ? "MENS" : "WOMENS"));
+// 	    StringBuilder sb = new StringBuilder();
+// 	    System.out.println("match.getMatch().getInning().get(1).getBatting_team().getTeamBadge()" +match.getMatch().getInning().get(1).getBatting_team().getTeamBadge());
+// 	    sb.append("tabfield:set_value_no_update 001-TARGET ").append(CricketFunctions.GetTargetData(match).getTargetRuns()).append(return_key).append(line_feed);
+// 	    sb.append("tabfield:set_value_no_update 001-TEAMNAME ").append(match.getMatch().getInning().get(1).getBatting_team().getTeamBadge()).append(return_key).append(line_feed);
+// 	    sb.append("tabfield:set_value_no_update 003-Header TARGET").append(return_key).append(line_feed);
+//
+// 	    print_writer.print(sb.toString());
+// 	    print_writer.flush();
+// 	}
+		 	private void sendVizMSETargetPage(String pageName,
+		            MatchAllData match,
+		            String ipAddress,
+		            String showName) {
+		
+		String[] urls = getShowIdAndURL(
+		pageName,
+		match,
+		ipAddress,
+		"Target",
+		showName);
+		
+		String modelUrl = urls[0];
+		String putUrl   = urls[1];
+		
+		String targetRuns = String.valueOf(
+		CricketFunctions.GetTargetData(match).getTargetRuns());
+		
+		String teamBadge = match.getMatch()
+		      .getInning()
+		      .get(1)
+		      .getBatting_team()
+		      .getTeamBadge();
+		
+		String payloadXml =
+		"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		+ "<payload xmlns=\"http://www.vizrt.com/types\"\n"
+		+ "         model=\"" + modelUrl + "\">\n"
+		
+		+ "  <field name=\"001-TARGET\">"
+		+ "<value>" + targetRuns + "</value></field>\n"
+		
+		+ "  <field name=\"001-TEAMNAME\">"
+		+ "<value>" + teamBadge + "</value></field>\n"
+		
+		+ "  <field name=\"003-Header\">"
+		+ "<value>TARGET</value></field>\n"
+		
+		+ "</payload>";
+		
+		putMethod(putUrl, payloadXml);
+		}
+// 	private void populateLASTXBALLS(PrintWriter print_writer,MatchAllData match,int ballno) {
+// 		
+// 		this_data_str = new ArrayList<String>();
+//		this_data_str.add(CricketFunctions.getlastthirtyballsdata(match, "-", match.getEventFile().getEvents(), ballno));	
+//		
+//		
+//		for(Inning inn : match.getMatch().getInning()) {
+//			if(inn.getIsCurrentInning().equalsIgnoreCase("YES")) {
+//			//	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-TeamRefName "+ inn.getBatting_team().getTeamBadge());
+//			}
+//		}
+//		
+//		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update  003-Header " + "LAST " + ballno + " BALLS");
+//		
+//		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 100-HEADER "+  "RUN"  + 
+//				CricketFunctions.Plural(Integer.valueOf(this_data_str.get(this_data_str.size()-1).split("-")[0])).toUpperCase());
+//		
+//		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-RUNS "+  Integer.valueOf(this_data_str.get(this_data_str.size()-1).split("-")[0]));
+//		
+//		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 102-HEADER "+  "WICKET" + 
+//				CricketFunctions.Plural(Integer.valueOf(this_data_str.get(this_data_str.size()-1).split("-")[1])).toUpperCase());
+//		
+//		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 103-BALLS "+  Integer.valueOf(this_data_str.get(this_data_str.size()-1).split("-")[1]));
+// 	
+// 		
+// 	}
+// 	private void populateProjected(PrintWriter print_writer,MatchAllData match,String cat) {
+// 		
+// 		// DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " + cat.toUpperCase());
+// 		 
+//// 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " +
+////			    (cat.equalsIgnoreCase("MEN") ? "MENS" : "WOMENS"));
+// 		
+// 		String[] proj_score_rate = new String[CricketFunctions.projectedScore(match).size()];
+//	    for (int i = 0; i < CricketFunctions.projectedScore(match).size(); i++) {
+//	    	proj_score_rate[i] = CricketFunctions.projectedScore(match).get(i);
+//	    	//System.out.println(proj_score_rate[i]);
+//        }	
+// 		for(Inning inn : match.getMatch().getInning()) {
+//			
+//			
+//			if(inn.getInningNumber() == 1 & inn.getIsCurrentInning().equalsIgnoreCase("YES")) {
+//				
+//				
+//				//team name 
+//		// 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME "+  inn.getBatting_team().getTeamBadge());
+//		 		
+//		 		
+//		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 106-CURR "+ " @CRR (" +  proj_score_rate[0] + ")");
+//		 		
+//		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 105-RUNS03 "+ proj_score_rate[1]);
+//		 		
+//		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 102-RR01 "+ " @ " + proj_score_rate[2] + " RPO");
+//		 		
+//		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-RUNS01 "+ proj_score_rate[3]);
+//		 		
+//		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 104-RR02 "+ " @ " + proj_score_rate[4] + " RPO");
+//		 		
+//		 		
+//		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 103-Runs02 "+ proj_score_rate[5]);
+//		 		
+//		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 003-Header "+  "PROJECTED SCORES");
+//		 		
+//			}
+// 		}
+// 		
+// 	}
+		 	private void sendVizMSEProjectedPage(String pageName,
+                    MatchAllData match,
+                    String ipAddress,
+                    String showName) {
+
+				String[] urls = getShowIdAndURL(
+				pageName,
+				match,
+				ipAddress,
+				"Projected",
+				showName);
 				
+				String modelUrl = urls[0];
+				String putUrl   = urls[1];
 				
-				//team name 
-		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME "+  inn.getBatting_team().getTeamBadge());
-		 		
-		 		
-		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 106-CURR "+ " @CRR (" +  proj_score_rate[0] + ")");
-		 		
-		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 105-RUNS03 "+ proj_score_rate[1]);
-		 		
-		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 102-RR01 "+ " @ " + proj_score_rate[2] + " RPO");
-		 		
-		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-RUNS01 "+ proj_score_rate[3]);
-		 		
-		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 104-RR02 "+ " @ " + proj_score_rate[4] + " RPO");
-		 		
-		 		
-		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 103-Runs02 "+ proj_score_rate[5]);
-		 		
-		 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 003-Header "+  "PROJECTED SCORES");
-		 		
-			}
- 		}
+				// Get projected score data once
+				List<String> projScoreRate = CricketFunctions.projectedScore(match);
+				
+				if (projScoreRate == null || projScoreRate.size() < 6) {
+				System.out.println("Projected score data is missing. Size = "
+				+ (projScoreRate == null ? 0 : projScoreRate.size()));
+				return;
+				}
+				
+				boolean currentFirstInnings = false;
+				
+				for (Inning inn : match.getMatch().getInning()) {
+				
+				if (inn.getInningNumber() == 1
+				&& CricketUtil.YES.equalsIgnoreCase(inn.getIsCurrentInning())) {
+				
+				currentFirstInnings = true;
+				break;
+				}
+				}
+				
+				// Same behavior as Trio logic
+				if (!currentFirstInnings) {
+				return;
+				}
+				
+				String payloadXml =
+				"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+				+ "<payload xmlns=\"http://www.vizrt.com/types\"\n"
+				+ "         model=\"" + modelUrl + "\">\n"
+				
+				+ "  <field name=\"003-Header\">"
+				+ "<value>PROJECTED SCORES</value></field>\n"
+				
+				+ "  <field name=\"106-CURR\">"
+				+ "<value>@CRR (" + projScoreRate.get(0) + ")</value></field>\n"
+				
+				+ "  <field name=\"105-RUNS03\">"
+				+ "<value>" + projScoreRate.get(1) + "</value></field>\n"
+				
+				+ "  <field name=\"102-RR01\">"
+				+ "<value>@ " + projScoreRate.get(2) + " RPO</value></field>\n"
+				
+				+ "  <field name=\"101-RUNS01\">"
+				+ "<value>" + projScoreRate.get(3) + "</value></field>\n"
+				
+				+ "  <field name=\"104-RR02\">"
+				+ "<value>@ " + projScoreRate.get(4) + " RPO</value></field>\n"
+				
+				+ "  <field name=\"103-Runs02\">"
+				+ "<value>" + projScoreRate.get(5) + "</value></field>\n"
+				
+				+ "</payload>";
+				
+				putMethod(putUrl, payloadXml);
+				}
+		 	
+		 	private void sendVizMSETossPage(String pageName,
+                    MatchAllData match,
+                    int teamId,
+                    String val,
+                    String ipAddress,
+                    String showName) {
+
+String[] urls = getShowIdAndURL(
+pageName,
+match,
+ipAddress,
+"TOSS",
+showName);
+
+String modelUrl = urls[0];
+String putUrl = urls[1];
+
+String data = "";
+String teamName = "";
+
+if (match.getSetup().getHomeTeamId() == teamId) {
+
+data = match.getSetup().getHomeTeam().getTeamName1()
+    + " WON THE TOSS AND "
+    + val;
+
+teamName = match.getSetup().getHomeTeam().getTeamBadge();
+
+} else {
+
+data = match.getSetup().getAwayTeam().getTeamName1()
+    + " WON THE TOSS AND "
+    + val;
+
+teamName = match.getSetup().getAwayTeam().getTeamBadge();
+}
+
+String payloadXml =
+"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
++ "<payload xmlns=\"http://www.vizrt.com/types\"\n"
++ "         model=\"" + modelUrl + "\">\n"
+
++ "  <field name=\"100-LINE\">"
++ "<value>WON THE TOSS</value></field>\n"
+
++ "  <field name=\"101-LINE\">"
++ "<value>" + val + "</value></field>\n"
+
++ "</payload>";
+
+putMethod(putUrl, payloadXml);
+}
+// 	private void populateToss(PrintWriter print_writer,MatchAllData match,String cat,int teamid,String val) {
+// 		
+// 		
+// 	//	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-EVENT-NAME "+  cat.toUpperCase());
+// 		
+// 		
+//// 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-EVENT-NAME " +
+////			    (cat.equalsIgnoreCase("MEN") ? "MENS" : "WOMENS"));
+//// 		if(teamid == match.getSetup().getHomeTeamId()) {
+//// 			//hometeam
+//// 	 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-TEAM_REF-NAME "+  match.getSetup().getHomeTeam().getTeamBadge());
+//// 		}else {
+//// 			//awayteam
+//// 	 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-TEAM_REF-NAME "+  match.getSetup().getAwayTeam().getTeamBadge());
+//// 		}
+// 		
+// 		String data = "",teamName = "";
+//		if(match.getSetup().getHomeTeamId()== Integer.valueOf(teamid)) {
+//			data = match.getSetup().getHomeTeam().getTeamName1() + " WON THE TOSS AND" + " "+  val;
+//			teamName = match.getSetup().getHomeTeam().getTeamBadge();
+//		}else {
+//			data = match.getSetup().getAwayTeam().getTeamName1() + " WON THE TOSS AND" + " "+ val;
+//			teamName = match.getSetup().getAwayTeam().getTeamBadge();
+//		}
+// 		
+// 		
+// 		//elected
+// 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 100-LINE "+  "WON THE TOSS");
+// 		
+// 		//result
+// 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-LINE "+ val);
+// 	}
+ 	
+ 	private void populateVictory(PrintWriter print_writer,MatchAllData match,String cat) {
+ 		System.out.println(CricketFunctions.GenerateMatchSummaryStatus(2, match, CricketUtil.FULL, "", "T20_MUMBAI", true).getTargetOrResult());
  		
- 	}
- 	private void populateToss(PrintWriter print_writer,MatchAllData match) {
+ 		String teamName = CricketFunctions.GenerateMatchSummaryStatus(2, match, CricketUtil.FULL, "", "T20_MUMBAI", 
+ 				true).getTargetOrResult().split("win")[0];
+ 		String result = "WIN " + CricketFunctions.GenerateMatchSummaryStatus(2, match, CricketUtil.FULL, "", "T20_MUMBAI", 
+ 				true).getTargetOrResult().split("win")[1].replace("remaining", "to spare").toUpperCase();
+// 		if(match.getSetup().getHomeTeam().getTeamName1().trim().equalsIgnoreCase(teamName.trim())) {
+// 			DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME "+  match.getSetup().getHomeTeam().getTeamBadge());
+// 		}else {
+// 			DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME "+  match.getSetup().getAwayTeam().getTeamBadge());
+// 		}
  		
  		
- 		if(match.getSetup().getTossWinningTeam() == match.getSetup().getHomeTeamId()) {
- 			//hometeam
- 	 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-TeamRefName "+  match.getSetup().getHomeTeam().getTeamBadge());
- 		}else {
- 			//awayteam
- 	 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-TeamRefName "+  match.getSetup().getAwayTeam().getTeamBadge());
- 		}
- 		//elected
- 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TARGET-HEAD "+  "CHOSE TO");
+ 	//	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-EVENT-NAME "+  cat.toUpperCase());
  		
- 		//result
- 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-TARGET "+  match.getSetup().getTossWinningDecision());
+// 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " +
+//			    (cat.equalsIgnoreCase("MEN") ? "MENS" : "WOMENS"));
+ 		
+ 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 003-Header "+  result);
+ 		
+ 		
+ 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 004-Header "+  "");
+ 		
+// 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-EVENT-NAME "+  cat.toUpperCase());
+// 		if(match.getSetup().getTossWinningTeam() == match.getSetup().getHomeTeamId()) {
+// 			//hometeam
+// 	 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-TEAM_REF_NAME "+  match.getSetup().getHomeTeam().getTeamBadge());
+// 		}else {
+// 			//awayteam
+// 	 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-TEAM_REF_NAME "+  match.getSetup().getAwayTeam().getTeamBadge());
+// 		}
+// 		//elected
+// 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 100-LINE "+  "WON THE TOSS");
+// 		
+// 		//result
+// 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-LINE "+ "CHOSE TO"  + " " + match.getSetup().getTossWinningDecision());
  	}
  	
  	private void populatePARTNERSHIP(PrintWriter print_writer,MatchAllData match,CricketService cricketService) {
@@ -2340,85 +2740,256 @@ public class DOAD_TRIO extends Scene{
  		
  	}
  	
- 	private void populateRUNRATE(PrintWriter print_writer,MatchAllData match,CricketService cricketService) {
+// 	private void populateRUNRATE(PrintWriter print_writer,MatchAllData match,CricketService cricketService,String cat) {
+// 		
+// 		
+// 		// DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " + cat.toUpperCase());
+// 		 
+//// 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " +
+////			    (cat.equalsIgnoreCase("MEN") ? "MENS" : "WOMENS"));
+// 		for(Inning inn : match.getMatch().getInning()) {
+// 			if(inn.getIsCurrentInning().equalsIgnoreCase(CricketUtil.YES)) {
+// 				// DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME "+  inn.getBatting_team().getTeamBadge());
+// 				 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-RUNS "+ inn.getRunRate());
+// 				 
+// 				 
+// 				 
+// 				 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 103-BALLS "+  CricketFunctions.generateRunRate(CricketFunctions.GetTargetData(match).getRemaningRuns(), 
+// 						0,CricketFunctions.GetTargetData(match).getRemaningBall(), 2,match));
+// 				 
+// 				 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 003-Header "+  "RUN RATES");
+// 				 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 100-HEADER "+  "CURRENT" );
+// 				 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 102-HEADER "+  "REQUIRED" );
+// 				
+// 			}
+// 		}
+// 	}
+ 	
+		 	private void sendVizMSERunRatePage(String pageName,
+		            MatchAllData match,
+		            CricketService cricketService,
+		            String ipAddress,
+		            String showName) {
+		
+		String[] urls = getShowIdAndURL(
+		pageName,
+		match,
+		ipAddress,
+		"RunsAndBall",
+		showName);
+		
+		String modelUrl = urls[0];
+		String putUrl = urls[1];
+		
+		String currentRunRate = "";
+		String requiredRunRate = "";
+		
+		for (Inning inn : match.getMatch().getInning()) {
+		
+		if (CricketUtil.YES.equalsIgnoreCase(inn.getIsCurrentInning())) {
+		
+		currentRunRate = String.valueOf(inn.getRunRate());
+		
+		requiredRunRate = CricketFunctions.generateRunRate(
+		CricketFunctions.GetTargetData(match).getRemaningRuns(),
+		0,
+		CricketFunctions.GetTargetData(match).getRemaningBall(),
+		2,
+		match);
+		
+		break;
+		}
+		}
+		
+		String payloadXml =
+		"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		+ "<payload xmlns=\"http://www.vizrt.com/types\"\n"
+		+ "         model=\"" + modelUrl + "\">\n"
+		
+		+ "  <field name=\"003-Header\"><value>RUN RATES</value></field>\n"
+		+ "  <field name=\"100-HEADER\"><value>CURRENT</value></field>\n"
+		+ "  <field name=\"101-RUNS\"><value>" + currentRunRate + "</value></field>\n"
+		+ "  <field name=\"102-HEADER\"><value>REQUIRED</value></field>\n"
+		+ "  <field name=\"103-BALLS\"><value>" + requiredRunRate + "</value></field>\n"
+		
+		+ "</payload>";
+		
+		putMethod(putUrl, payloadXml);
+		}
+ 	
+// 	private void populateLastxovers(PrintWriter print_writer,MatchAllData match,int overnumber,String cat) {
+// 		System.out.println("coming insde");
+// 		
+// 		int innnuber =0;
+//		for (Inning inn : match.getMatch().getInning()) {
+//		if (inn.getIsCurrentInning().equalsIgnoreCase(CricketUtil.YES)) {
+//			 innnuber = inn.getInningNumber();	
+//		}
+//	} 
+// 		// DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " + cat.toUpperCase());
+// 		 List<OverByOverData> manhattan = CricketFunctions.getOverByOverData(match, innnuber, "MANHATTAN", match.getEventFile().getEvents());
+// 	    
+// 		 
+// 		 int Runs =0 ,wickets= 0; 
+// 		 System.out.println(manhattan.size()-1);
+// 		 for(int i=1; i<manhattan.size();i++) {
+// 			 if(i >= overnumber) {
+// 				Runs += manhattan.get(i).getOverTotalRuns();
+// 		        wickets += manhattan.get(i).getOverTotalWickets();
+// 			 }
+// 		} 
+//// 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " +
+////			    (cat.equalsIgnoreCase("MEN") ? "MENS" : "WOMENS"));
+// 		for(Inning inn : match.getMatch().getInning()) {
+// 			if(inn.getIsCurrentInning().equalsIgnoreCase(CricketUtil.YES)) {
+// 		//		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME "+  inn.getBatting_team().getTeamBadge());
+// 				 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-RUNS "+ Runs);
+// 				 
+// 				 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 103-BALLS "+  wickets);
+// 				
+// 				 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 102-HEADER "+  "WICKET" + CricketFunctions.Plural(wickets).toUpperCase());
+// 				 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 100-HEADER "+  "RUNS" );
+// 				 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 003-Header "+  "LAST " + 
+// 						((inn.getTotalOvers() + 1)- overnumber) + "." + inn.getTotalBalls() + " OVERS" );
+// 				
+// 			}
+// 		}
+// 	}
+		 	private void sendVizMSELastXOversPage(String pageName,
+		            MatchAllData match,
+		            int overNumber,
+		            String ipAddress,
+		            String showName) {
+		
+		String[] urls = getShowIdAndURL(
+				pageName,
+		match,
+		ipAddress,
+		"RunsAndBall",
+		showName);
+		
+		String modelUrl = urls[0];
+		String putUrl = urls[1];
+		
+		int inningNumber = 0;
+		
+		for (Inning inn : match.getMatch().getInning()) {
+		if (CricketUtil.YES.equalsIgnoreCase(inn.getIsCurrentInning())) {
+		inningNumber = inn.getInningNumber();
+		break;
+		}
+		}
+		
+		List<OverByOverData> manhattan =
+		CricketFunctions.getOverByOverData(
+		match,
+		inningNumber,
+		"MANHATTAN",
+		match.getEventFile().getEvents());
+		
+		int runs = 0;
+		int wickets = 0;
+		
+		for (int i = 1; i < manhattan.size(); i++) {
+		
+		if (i >= overNumber) {
+		
+		runs += manhattan.get(i).getOverTotalRuns();
+		wickets += manhattan.get(i).getOverTotalWickets();
+		}
+		}
+		
+		String header = "";
+		String wicketHeader = "";
+		
+		for (Inning inn : match.getMatch().getInning()) {
+		
+		if (CricketUtil.YES.equalsIgnoreCase(inn.getIsCurrentInning())) {
+		
+		header = "LAST "
+		+ ((inn.getTotalOvers() + 1) - overNumber)
+		+ "."
+		+ inn.getTotalBalls()
+		+ " OVERS";
+		
+		wicketHeader =
+		"WICKET"
+		+ CricketFunctions.Plural(wickets).toUpperCase();
+		
+		break;
+		}
+		}
+		
+		String payloadXml =
+		"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		+ "<payload xmlns=\"http://www.vizrt.com/types\"\n"
+		+ "         model=\"" + modelUrl + "\">\n"
+		
+		+ "  <field name=\"003-Header\"><value>" + header + "</value></field>\n"
+		+ "  <field name=\"100-HEADER\"><value>RUNS</value></field>\n"
+		+ "  <field name=\"101-RUNS\"><value>" + runs + "</value></field>\n"
+		+ "  <field name=\"102-HEADER\"><value>" + wicketHeader + "</value></field>\n"
+		+ "  <field name=\"103-BALLS\"><value>" + wickets + "</value></field>\n"
+		
+		+ "</payload>";
+		
+		putMethod(putUrl, payloadXml);
+		}
+ 	
+ 	private void populateMatchID(PrintWriter print_writer,MatchAllData match,CricketService cricketService,String cat) {
  		
- 		for(Inning inn : match.getMatch().getInning()) {
- 			if(inn.getIsCurrentInning().equalsIgnoreCase(CricketUtil.YES)) {
- 				 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME "+  inn.getBatting_team().getTeamBadge());
- 				 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-RUNS "+ inn.getRunRate());
- 				 
- 				 
- 				 
- 				 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 103-BALLS "+  CricketFunctions.generateRunRate(CricketFunctions.GetTargetData(match).getRemaningRuns(), 
- 						0,CricketFunctions.GetTargetData(match).getRemaningBall(), 2,match));
- 				 
- 				 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 003-Header "+  "RUN RATES");
- 				 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 100-HEADER "+  "CURRENT" );
- 				 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 102-HEADER "+  "REQUIRED" );
- 				
- 			}
- 		}
- 		
- 		
-
- 	}
- 	private void populateMatchID(PrintWriter print_writer,MatchAllData match,CricketService cricketService) {
- 		
+// 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " +
+//			    (cat.equalsIgnoreCase("MEN") ? "MENS" : "WOMENS"));
  		
  		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update  004-LOCATION "+  "LIVE FROM WANKHEDE STADIUM");
  		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update  003-MATCH-NUMBER "+  match.getSetup().getMatchIdent());
  		
- 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME "+  match.getSetup().getHomeTeam().getTeamBadge());
- 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-TEAMNAME "+  match.getSetup().getAwayTeam().getTeamBadge());
+ //		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME "+  match.getSetup().getHomeTeam().getTeamBadge());
+ //		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-TEAMNAME "+  match.getSetup().getAwayTeam().getTeamBadge());
  		
  		
- 	//	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME "+  match.getSetup().getHomeTeam().getTeamBadge());
- 	//	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-TEAMNAME "+  match.getSetup().getAwayTeam().getTeamBadge());
+ 	//	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-PLAYER_IMAGE "+  match.getSetup().getHomeTeam().getTeamBadge());
+ 	//	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 102-PLAYER_IMAGE "+  match.getSetup().getAwayTeam().getTeamBadge());
 
  	}
  	
- 	private void populateMOSTRUNS(PrintWriter print_writer,MatchAllData match,CricketService cricketService, List<Tournament> tournament_stats,String plID) {
+ 	private void populateMOSTRUNS(PrintWriter print_writer,MatchAllData match,CricketService cricketService, List<Tournament> tournament_stats,String plID,String cat) {
  		
  		 int rowId = 0;
- 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update  000-MATCH-NUMBER MOST RUNS");
- 		
- 		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 700-SELECT-STAT-HEAD 1");
- 		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 801-STAT-HEAD MTS");
- 		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 802-STAT-HEAD RUNS");
- 		for(int i = 0; i <= tournament_stats.size() - 1 ; i++) {
+ 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update  003-HEADER MOST RUNS");
+  		for(int i = 0; i <= tournament_stats.size() - 1 ; i++) {
 			  rowId = rowId + 1;
 			if(rowId <= 5) {
 				
-				DoadWriteToTrio(print_writer, "table:set_cell_value 900-DATA 4-SELECT_VALUE " + (rowId-1) + " " + 1);
-				DoadWriteToTrio(print_writer, "table:set_cell_value 900-DATA 1-SELECT_TEAM_NAME " + (rowId-1) + " " + 1);
 				
-				DoadWriteToTrio(print_writer, "table:set_cell_value 900-DATA 5-STAT-VALUE " + (rowId-1) + " " + tournament_stats.get(i).getMatches());
-				DoadWriteToTrio(print_writer, "table:set_cell_value 900-DATA 6-STAT-VALUE " + (rowId-1) + " " + tournament_stats.get(i).getRuns());
+				DoadWriteToTrio(print_writer,  "tabfield:set_value_no_update 004-SELECT_CAP " + 1);
 				
+				DoadWriteToTrio(print_writer,  "tabfield:set_value_no_update " + rowId + "02-NAME " +  tournament_stats.get(i).getPlayer().getTicker_name());
 				
-				DoadWriteToTrio(print_writer, "table:set_cell_value 900-DATA 2-PLAYER-NAME " + (rowId-1) + " " + tournament_stats.get(i).getPlayer().getFull_name());
+				DoadWriteToTrio(print_writer,  "tabfield:set_value_no_update " + rowId + "03-SELECT-STAT " + 1);
 				
+				DoadWriteToTrio(print_writer,  "tabfield:set_value_no_update " + rowId + "04-STAT " + rowId);
+				DoadWriteToTrio(print_writer,  "tabfield:set_value_no_update " + rowId + "05-STAT " + tournament_stats.get(i).getRuns());
+				DoadWriteToTrio(print_writer,  "tabfield:set_value_no_update " + rowId + "06-SELECT_CAP " + 0);
+				
+//				for(Team tm:cricketService.getTeams()) {
+//					if(tm.getTeamId() == tournament_stats.get(i).getPlayer().getTeamId()) {
+//						DoadWriteToTrio(print_writer, "table:set_cell_value 900-DATA 3-TEAM-NAME " + (rowId-1) + " " + tm.getTeamBadge());
+//						
+//					}
+//				}
+		
 				for(Team tm:cricketService.getTeams()) {
-					if(tm.getTeamId() == tournament_stats.get(i).getPlayer().getTeamId()) {
-						DoadWriteToTrio(print_writer, "table:set_cell_value 900-DATA 3-TEAM-NAME " + (rowId-1) + " " + tm.getTeamName1());
+					if(tm.getTeamId() == tournament_stats.get(rowId-1).getPlayer().getTeamId()) {
+						DoadWriteToTrio(print_writer,  "tabfield:set_value_no_update " + rowId + "00-TEAMNAME " +  tm.getTeamBadge());
+						
+						DoadWriteToTrio(print_writer, "tabfield:set_value_no_update " + rowId + "01-PLAYER-IMAGE " + 
+			    				" C:\\\\Images\\\\T20_MUMBAI\\\\PHOTOS\\"
+			    		      			+ cat +  "\\\\BIG_1024\\\\"   +  tm.getTeamName4()+ "\\\\" +
+			    							tournament_stats.get(rowId-1).getPlayer().getPhoto() + CricketUtil.PNG_EXTENSION);
 						
 					}
-				}
-				
-				if(Integer.valueOf(plID.split("_")[0]) == rowId) {
-					DoadWriteToTrio(print_writer, "table:set_cell_value 900-DATA 0-SELECT_HIGHLIGHT " + (rowId-1) + " 1");
-					for(Team tm:cricketService.getTeams()) {
-						if(tm.getTeamId() == tournament_stats.get(rowId-1).getPlayer().getTeamId()) {
-							DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-TeamRefName "+  tm.getTeamBadge());
-							DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 501-IMAGE "+ "C:\\\\Images\\\\ISPL\\\\Action_Images\\"
-					      			 + tm.getTeamBadge().toUpperCase().substring(0, 3) + "_"+ tournament_stats.get(rowId-1).getPlayer().getPhoto() 
-					      			 + CricketUtil.PNG_EXTENSION);
-							
-						}
-					}	
-				}else {
-					DoadWriteToTrio(print_writer, "table:set_cell_value 900-DATA 0-SELECT_HIGHLIGHT " + (rowId-1) + " 0");
-				}
+				}	
 			}
 		}
  	}
@@ -2673,59 +3244,56 @@ public class DOAD_TRIO extends Scene{
 		}
 	}
  	
- 	private void populateMOSTWKTS(PrintWriter print_writer,MatchAllData match,CricketService cricketService, List<Tournament> tournament_stats,String plID) {
+ 	private void populateMOSTWKTS(PrintWriter print_writer,MatchAllData match,CricketService cricketService, List<Tournament> tournament_stats,String plID,String cat) {
  		
 		 int rowId = 0;
-		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update  000-MATCH-NUMBER MOST WICKETS");
+		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update  003-HEADER MOST WICKETS");
 		
-		
-		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 700-SELECT-STAT-HEAD 1");
-		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 801-STAT-HEAD MTS");
-		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 802-STAT-HEAD WKTS");
 		for(int i = 0; i <= tournament_stats.size() - 1 ; i++) {
 			  rowId = rowId + 1;
 			if(rowId <= 5) {
 				
-				DoadWriteToTrio(print_writer, "table:set_cell_value 900-DATA 4-SELECT_VALUE " + (rowId-1) + " " + 1);
-				DoadWriteToTrio(print_writer, "table:set_cell_value 900-DATA 1-SELECT_TEAM_NAME " + (rowId-1) + " " + 1);
+				DoadWriteToTrio(print_writer,  "tabfield:set_value_no_update 004-SELECT_CAP " + 2);
 				
-				DoadWriteToTrio(print_writer, "table:set_cell_value 900-DATA 5-STAT-VALUE " + (rowId-1) + " " + tournament_stats.get(i).getMatches());
-				DoadWriteToTrio(print_writer, "table:set_cell_value 900-DATA 6-STAT-VALUE " + (rowId-1) + " " + tournament_stats.get(i).getWickets());
+				DoadWriteToTrio(print_writer,  "tabfield:set_value_no_update " + rowId + "02-NAME " +  tournament_stats.get(i).getPlayer().getTicker_name());
 				
+				DoadWriteToTrio(print_writer,  "tabfield:set_value_no_update " + rowId + "03-SELECT-STAT " + 1);
 				
-				DoadWriteToTrio(print_writer, "table:set_cell_value 900-DATA 2-PLAYER-NAME " + (rowId-1) + " " + tournament_stats.get(i).getPlayer().getFull_name());
+				DoadWriteToTrio(print_writer,  "tabfield:set_value_no_update " + rowId + "04-STAT " + rowId);
+				DoadWriteToTrio(print_writer,  "tabfield:set_value_no_update " + rowId + "05-STAT " + tournament_stats.get(i).getWickets());
+				DoadWriteToTrio(print_writer,  "tabfield:set_value_no_update " + rowId + "06-SELECT_CAP " + 0);
 				
-				
+//				for(Team tm:cricketService.getTeams()) {
+//					if(tm.getTeamId() == tournament_stats.get(i).getPlayer().getTeamId()) {
+//						DoadWriteToTrio(print_writer, "table:set_cell_value 900-DATA 3-TEAM-NAME " + (rowId-1) + " " + tm.getTeamBadge());
+//					}
+//				}
 				
 				for(Team tm:cricketService.getTeams()) {
-					if(tm.getTeamId() == tournament_stats.get(i).getPlayer().getTeamId()) {
-						DoadWriteToTrio(print_writer, "table:set_cell_value 900-DATA 3-TEAM-NAME " + (rowId-1) + " " + tm.getTeamName1());
+					if(tm.getTeamId() == tournament_stats.get(rowId-1).getPlayer().getTeamId()) {
+						DoadWriteToTrio(print_writer,  "tabfield:set_value_no_update " + rowId + "00-TEAMNAME " +  tm.getTeamBadge());
+						
+						System.out.println("CAT" + cat);
+						DoadWriteToTrio(print_writer, "tabfield:set_value_no_update " + rowId + "01-PLAYER-IMAGE " + 
+			    				" C:\\\\Images\\\\T20_MUMBAI\\\\PHOTOS\\"
+			    		      			+ cat +  "\\\\BIG_1024\\\\"   +  tm.getTeamName4()+ "\\\\" +
+			    							tournament_stats.get(rowId-1).getPlayer().getPhoto() + CricketUtil.PNG_EXTENSION);
 						
 					}
-				}
-				
-				if(Integer.valueOf(plID.split("_")[0]) == rowId) {
-					DoadWriteToTrio(print_writer, "table:set_cell_value 900-DATA 0-SELECT_HIGHLIGHT " + (rowId-1) + " 1");
-					for(Team tm:cricketService.getTeams()) {
-						if(tm.getTeamId() == tournament_stats.get(rowId-1).getPlayer().getTeamId()) {
-							DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-TeamRefName "+  tm.getTeamBadge());
-							DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 501-IMAGE "+ "C:\\\\Images\\\\ISPL\\\\Action_Images\\"
-					      			 + tm.getTeamBadge().toUpperCase().substring(0, 3) + "_"+ tournament_stats.get(rowId-1).getPlayer().getPhoto() 
-					      			 + CricketUtil.PNG_EXTENSION);
-							
-						}
-					}	
-				}else {
-					DoadWriteToTrio(print_writer, "table:set_cell_value 900-DATA 0-SELECT_HIGHLIGHT " + (rowId-1) + " 0");
-				}
+				}	
 			}
 		}
 		
 	}
-    private void populateEquation(PrintWriter print_writer,MatchAllData match,HeadToHead headToHeads) {
+    private void populateEquation(PrintWriter print_writer,MatchAllData match,HeadToHead headToHeads,String cat) {
  		
  		
- 	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME "+  match.getMatch().getInning().get(1).getBatting_team().getTeamBadge());
+   // 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " + cat.toUpperCase());
+    	
+//    	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " +
+//			    (cat.equalsIgnoreCase("MEN") ? "MENS" : "WOMENS"));
+    	
+ 	// 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME "+  match.getMatch().getInning().get(1).getBatting_team().getTeamBadge());
 
  		//run
  		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-RUNS "+ CricketFunctions.GetTargetData(match).getRemaningRuns());
@@ -2858,6 +3426,11 @@ public class DOAD_TRIO extends Scene{
     
     private void populateOpenerProfile(PrintWriter print_writer,MatchAllData match,int inn,String cat) throws InterruptedException {
  		
+   // 		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " + cat.toUpperCase());
+    		
+//    		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " +
+//    			    (cat.equalsIgnoreCase("MEN") ? "MENS" : "WOMENS"));
+    	
     	
     	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-PlayerName01 "+  player.getTicker_name());
     	 	
@@ -2867,17 +3440,14 @@ public class DOAD_TRIO extends Scene{
     		      			player.getPhoto()+ CricketUtil.PNG_EXTENSION);
     	 	
     	 	
-    	 	//2
-    	 	System.out.println("player.getTicker_name()" +player.getTicker_name());
-    	 	System.out.println("player2.getTicker_name()" + player2.getTicker_name());
-    	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 102-PlayerName01 "+  player2.getTicker_name());
+    	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-PlayerName02 "+  player2.getTicker_name());
     	 	
     	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 102-layerImage02 "+ 
     				"C:\\\\Images\\\\T20_MUMBAI\\\\PHOTOS\\"
     		      			+ cat +  "\\\\STRAIGHT_1024\\\\"   +  team.getTeamName4()+ "\\\\" +
     		      			player2.getPhoto()+ CricketUtil.PNG_EXTENSION);
     	 	
-    	 	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME " + team.getTeamBadge() );
+    	 //	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME " + team.getTeamBadge() );
     		//head
     	 	
    		
@@ -2931,6 +3501,11 @@ public class DOAD_TRIO extends Scene{
    
    private void populateInAT(PrintWriter print_writer,MatchAllData match,int inn,String cat) throws InterruptedException {
  	  
+	   
+//	   DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " + cat.toUpperCase());
+	   
+//		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " +
+//			    (cat.equalsIgnoreCase("MEN") ? "MENS" : "WOMENS"));
  	  int rowId = 0;
  	  for(BattingCard bc : inning.getBattingCard()) {
  		  rowId = rowId + 1;
@@ -2942,7 +3517,7 @@ public class DOAD_TRIO extends Scene{
 						bc.getPlayer().getPhoto()+ CricketUtil.PNG_EXTENSION);
 			      DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-AT "+  rowId);	
 			      
-			      DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME "+  inning.getBatting_team().getTeamBadge());
+			//      DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME "+  inning.getBatting_team().getTeamBadge());
 			   }
  	  	}
 			
@@ -2971,6 +3546,12 @@ public class DOAD_TRIO extends Scene{
    
       private void populateProfile(PrintWriter print_writer,MatchAllData match,int inn,String cat) throws InterruptedException {
     	    	  
+    	  
+   // 	  DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " + cat.toUpperCase());
+    	  
+//    		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " +
+//    			    (cat.equalsIgnoreCase("MEN") ? "MENS" : "WOMENS"));
+    	  
     	  int rowId = 0;
     	  for(BattingCard bc : inning.getBattingCard()) {
     		  rowId = rowId + 1;
@@ -2982,7 +3563,7 @@ public class DOAD_TRIO extends Scene{
 						bc.getPlayer().getPhoto()+ CricketUtil.PNG_EXTENSION);
 			      DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-AT "+  rowId);	
 			      
-			      DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME "+  inning.getBatting_team().getTeamBadge());
+			//      DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME "+  inning.getBatting_team().getTeamBadge());
 			   }
     	  	}
 			
@@ -3220,24 +3801,30 @@ public class DOAD_TRIO extends Scene{
 		}
  	}
     
-  private void populateBoundaries(PrintWriter print_writer,MatchAllData match,CricketService cricketService,int innn) {
-	
-	  for(Inning inn : match.getMatch().getInning()) {
-	//	if(inn.getInningNumber() == (innn-1)) {
-		  if(inn.getInningNumber() == (innn)) {
-			 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME "+  inn.getBatting_team().getTeamBadge());
-			 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-RUNS "+ inn.getTotalFours());
-			 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 103-BALLS "+  inn.getTotalSixes());
-			 
-			 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 003-Header "+  "BOUNDARIES");
-			 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 100-HEADER "+  "FOUR" + CricketFunctions.Plural(inn.getTotalFours()).toUpperCase());
-			 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 102-HEADER "+  "SIXES" );
-			 
-		}
-	}
- 		
-    
- 	}
+//  private void populateBoundaries(PrintWriter print_writer,MatchAllData match,CricketService cricketService,int innn,String cat) {
+//	
+//	  
+//	//  DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " + cat.toUpperCase());
+//	  
+////		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " +
+////			    (cat.equalsIgnoreCase("MEN") ? "MENS" : "WOMENS"));
+//	  for(Inning inn : match.getMatch().getInning()) {
+//	//	if(inn.getInningNumber() == (innn-1)) {
+//		  if(inn.getInningNumber() == (innn)) {
+//			  
+//	//		 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME "+  inn.getBatting_team().getTeamBadge());
+//			 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 101-RUNS "+ inn.getTotalFours());
+//			 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 103-BALLS "+  inn.getTotalSixes());
+//			 
+//			 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 003-Header "+  "BOUNDARIES");
+//			 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 100-HEADER "+  "FOUR" + CricketFunctions.Plural(inn.getTotalFours()).toUpperCase());
+//			 DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 102-HEADER "+  "SIXES" );
+//			 
+//		}
+//	}
+// 		
+//    
+// 	}
   
 //      private void populateBoundaries(PrintWriter print_writer, MatchAllData match, CricketService cricketService, int innn) {
 //    	  //  StringBuilder batchCommands = new StringBuilder();
@@ -3390,42 +3977,130 @@ public class DOAD_TRIO extends Scene{
 		
 		return null;
 	}
- 	
-	private void populateNextToBat(PrintWriter print_writer, MatchAllData match, CricketService cricketService) {
+ 	private void sendVizMSENextToBatPage(String pageName,
+            MatchAllData match,
+            CricketService cricketService,
+            String cat,
+            String ipAddress,
+            String showName) {
+
+		String[] urls = getShowIdAndURL(
+		pageName,
+		match,
+		ipAddress,
+		"Next3",
+		showName);
 		
-		inning = match.getMatch().getInning().stream().filter(inn -> inn.getIsCurrentInning().equalsIgnoreCase(CricketUtil.YES)).findAny().orElse(null);
+		String modelUrl = urls[0];
+		String putUrl = urls[1];
 		
-		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 003-HEADER " + "NEXT TO BAT");
-		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 00-REF-NAME " + (match.getSetup().getHomeTeamId() == inning.getBattingTeamId() ? 
-				match.getSetup().getHomeTeam().getTeamName4() : match.getSetup().getAwayTeam().getTeamName4()));
+		Inning inning = match.getMatch().getInning()
+		.stream()
+		.filter(inn -> CricketUtil.YES.equalsIgnoreCase(inn.getIsCurrentInning()))
+		.findAny()
+		.orElse(null);
+		
+		if (inning == null) {
+		return;
+		}
+		
+		StringBuilder payloadXml = new StringBuilder();
+		
+		payloadXml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+		payloadXml.append("<payload xmlns=\"http://www.vizrt.com/types\" ");
+		payloadXml.append("model=\"").append(modelUrl).append("\">\n");
+		
+		payloadXml.append("<field name=\"002-HEADER\"><value>NEXT TO BAT</value></field>\n");
 		
 		int rowId = 0;
 		int position = 0;
-		for(BattingCard bc : inning.getBattingCard()) {
-			position++;
-			if(rowId>=3) break;
-			switch (bc.getStatus()) {
-			case CricketUtil.STILL_TO_BAT:
-				if(bc.getHowOut() != null && !bc.getHowOut().equalsIgnoreCase(CricketUtil.RETIRED_HURT)) continue;
-				rowId++;
-				DoadWriteToTrio(print_writer, "table:set_cell_value 002-LIST 001-SCORE-POSITION-OMO " +(rowId-1) +" 0");
-				DoadWriteToTrio(print_writer,  "table:set_cell_value 002-LIST 01-PLAYER-IMAGE " +(rowId-1)+ " C:\\\\Images\\\\ISPL\\\\PHOTOS\\"+
-				(inning.getBattingTeamId()== match.getSetup().getHomeTeamId() ?match.getSetup().getHomeTeam().getTeamName4() : 
-					match.getSetup().getAwayTeam().getTeamName4() )+ "\\\\"+bc.getPlayer().getPhoto()+CricketUtil.PNG_EXTENSION + "");
-				DoadWriteToTrio(print_writer,  "table:set_cell_value 002-LIST 02-ICON " +(rowId-1)+ " IMAGE*/Default/Essentials/Icons/"+getPlayerIconName(bc.getPlayer())+ "");
-				DoadWriteToTrio(print_writer,  "table:set_cell_value 002-LIST 03-FIRST-NAME " +(rowId-1)+" "+ bc.getPlayer().getFirstname() + "");
-				DoadWriteToTrio(print_writer,  "table:set_cell_value 002-LIST 04-LAST-NAME " + (rowId-1)+" "+(bc.getPlayer().getSurname() == null ? "" : bc.getPlayer().getSurname()) + "");
-				DoadWriteToTrio(print_writer,  "table:set_cell_value 002-LIST 05-IN-AT " +(rowId-1)+" IN AT " + "");
-				DoadWriteToTrio(print_writer,  "table:set_cell_value 002-LIST 06-HIDE-NUMBER " +(rowId-1)+" "+ "1" );
-				DoadWriteToTrio(print_writer,  "table:set_cell_value 002-LIST 07-POSITION " +(rowId-1)+" "+ position);
-				DoadWriteToTrio(print_writer,  "table:set_cell_value 002-LIST 08-RUNS "	 + (rowId-1)+"  ");
-				DoadWriteToTrio(print_writer,  "table:set_cell_value 002-LIST 09-BALLS " +(rowId-1)+"  ");
-
-				break;
-			}
-			
+		
+		for (BattingCard bc : inning.getBattingCard()) {
+		
+		position++;
+		
+		if (rowId >= 3) {
+		break;
 		}
-	}
+		
+		if (CricketUtil.STILL_TO_BAT.equalsIgnoreCase(bc.getStatus())) {
+		
+		if (bc.getHowOut() != null &&
+		!bc.getHowOut().equalsIgnoreCase(CricketUtil.RETIRED_HURT)) {
+		continue;
+		}
+		
+		rowId++;
+		
+		String imagePath =
+		"C:\\Images\\T20_MUMBAI\\PHOTOS\\"
+		+ cat
+		+ "\\STRAIGHT_1024\\"
+		+ (inning.getBattingTeamId() == match.getSetup().getHomeTeamId()
+		? match.getSetup().getHomeTeam().getTeamName4()
+		: match.getSetup().getAwayTeam().getTeamName4())
+		+ "\\"
+		+ bc.getPlayer().getPhoto()
+		+ CricketUtil.PNG_EXTENSION;
+		
+		payloadXml.append("<field name=\"")
+		.append(rowId)
+		.append("02-PLAYER-IMAGE\"><value>")
+		.append(imagePath)
+		.append("</value></field>\n");
+		
+		payloadXml.append("<field name=\"")
+		.append(rowId)
+		.append("03-PLAYER-NAME\"><value>")
+		.append(" ")
+		.append(bc.getPlayer().getTicker_name())
+		.append("</value></field>\n");
+		}
+		}
+		
+		payloadXml.append("</payload>");
+		
+		putMethod(putUrl, payloadXml.toString());
+		}
+ 	
+//	private void populateNextToBat(PrintWriter print_writer, MatchAllData match, CricketService cricketService,String cat) {
+//		
+//		inning = match.getMatch().getInning().stream().filter(inn -> inn.getIsCurrentInning().equalsIgnoreCase(CricketUtil.YES)).findAny().orElse(null);
+//		
+//		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 002-HEADER " + "NEXT TO BAT");
+////		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 001-TEAMNAME " + (match.getSetup().getHomeTeamId() == inning.getBattingTeamId() ? 
+////				match.getSetup().getHomeTeam().getTeamBadge() : match.getSetup().getAwayTeam().getTeamBadge()));
+//		
+//	//	DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " + cat.toUpperCase());
+//		
+////		DoadWriteToTrio(print_writer, "tabfield:set_value_no_update 000-EVENTNAME " +
+////			    (cat.equalsIgnoreCase("MEN") ? "MENS" : "WOMENS"));
+//		int rowId = 0;
+//		int position = 0;
+//		for(BattingCard bc : inning.getBattingCard()) {
+//			position++;
+//			if(rowId>=3) break;
+//			switch (bc.getStatus()) {
+//			case CricketUtil.STILL_TO_BAT:
+//				if(bc.getHowOut() != null && !bc.getHowOut().equalsIgnoreCase(CricketUtil.RETIRED_HURT)) continue;
+//				rowId++;
+////							DoadWriteToTrio(print_writer,  "tabfield:set_value_no_update " + rowId + "01-IN-AT-VALUE " +  position);
+//
+//
+//				DoadWriteToTrio(print_writer, "tabfield:set_value_no_update " + rowId + "02-PLAYER-IMAGE " + 
+//	    				" C:\\\\Images\\\\T20_MUMBAI\\\\PHOTOS\\"
+//	    		      			+ cat +  "\\\\STRAIGHT_1024\\\\"   +  (inning.getBattingTeamId()== match.getSetup().getHomeTeamId() ?match.getSetup().getHomeTeam().getTeamName4() : 
+//	    							match.getSetup().getAwayTeam().getTeamName4())+ "\\\\" +
+//	    							bc.getPlayer().getPhoto() + CricketUtil.PNG_EXTENSION);
+//				
+//				DoadWriteToTrio(print_writer,  "tabfield:set_value_no_update " + rowId + "03-PLAYER-NAME " +" "+ bc.getPlayer().getTicker_name());
+//				
+//				
+//				break;
+//			}
+//			
+//		}
+//	}
 	private void populateUPLINE(PrintWriter print_writer,MatchAllData match,CricketService cricketService) {
  		
  		for(Inning inn:match.getMatch().getInning()) {
@@ -3666,6 +4341,149 @@ public class DOAD_TRIO extends Scene{
 	    return playerIcon;  
 	}
 	
+//	private void sendVizMSEBoundaryPage(
+//	        String pageName,
+//	        MatchAllData match,
+//	        int inningNumber) {
+//
+//	   // String MSE_URL = "http://10.100.2.1:8580";
+//	    
+//	    	String MSE_URL = "http://10.100.2.1:8580/models/vdf/storage/shows/%7B25B3F0C6-1D65-4DFC-89C8-8ECFB75EFC1A%7D/mastertemplates/RunsAndBall";
+//	    String totalFours  = "0";
+//	    String totalSixes  = "0";
+//	    String fourHeader  = "FOURS";
+//	    String teamBadge   = "";
+//
+//	    for (Inning inn : match.getMatch().getInning()) {
+//	        if (inn.getInningNumber() == inningNumber) {
+//	            totalFours = String.valueOf(inn.getTotalFours());
+//	            totalSixes = String.valueOf(inn.getTotalSixes());
+//	            fourHeader = "FOUR" + CricketFunctions
+//	                            .Plural(inn.getTotalFours())
+//	                            .toUpperCase();
+//	            teamBadge  = inn.getBatting_team().getTeamBadge();
+//	        }
+//	    }
+//
+//	    String populateXml =
+//	    	    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+//	    	    "<payload xmlns=\"http://www.vizrt.com/types\" " +
+//	    	    "model=\"http://10.100.2.1:8580/models/vdf/storage/shows/%7B25B3F0C6-1D65-4DFC-89C8-8ECFB75EFC1A%7D/mastertemplates/RunsAndBall\">" +
+//
+//	    	    "<field name=\"003-Header\">" +
+//	    	    "<value>RISHABH</value>" +
+//	    	    "</field>" +
+//
+//	    	    "<field name=\"100-HEADER\">" +
+//	    	    "<value>" + fourHeader + "</value>" +
+//	    	    "</field>" +
+//
+//	    	    "<field name=\"101-RUNS\">" +
+//	    	    "<value>" + totalFours + "</value>" +
+//	    	    "</field>" +
+//
+//	    	    "<field name=\"102-HEADER\">" +
+//	    	    "<value>ANKIT</value>" +
+//	    	    "</field>" +
+//
+//	    	    "<field name=\"103-BALLS\">" +
+//	    	    "<value>" + totalSixes + "</value>" +
+//	    	    "</field>" +
+//
+//	    	    "</payload>";
+//
+////	    String cueXml =
+////	        "<mos>" +
+////	        "  <cue>" +
+////	        "    <channel>PROGRAM</channel>" +
+////	        "    <page>" + pageName + "</page>" +
+////	        "  </cue>" +
+////	        "</mos>";
+////
+////	    String takeXml =
+////	        "<mos>" +
+////	        "  <take>" +
+////	        "    <channel>PROGRAM</channel>" +
+////	        "    <page>" + pageName + "</page>" +
+////	        "  </take>" +
+////	        "</mos>";
+//	    ;
+//
+//	    try {
+//	        sendMseXmlRequest(
+//	            MSE_URL, populateXml,
+//	            "MSE STEP 1 - BOUNDARY PAGE POPULATED"
+//	        );
+//	    } catch (Exception e) {
+//	        System.err.println(
+//	            "[VizMSE] Boundary MSE failed: "
+//	            + e.getMessage()
+//	        );
+//	        e.printStackTrace();
+//	    }
+//	}
+//
+//	private void sendMseXmlRequest(
+//	        String mseUrl,
+//	        String xml,
+//	        String step) throws Exception {
+//
+//	    java.net.URL url = new java.net.URL(mseUrl);
+//
+//	    java.net.HttpURLConnection conn =
+//	            (java.net.HttpURLConnection) url.openConnection();
+//
+//	    conn.setRequestMethod("PUT");
+//	    conn.setDoOutput(true);
+//	    conn.setRequestProperty("Content-Type", "application/vnd.vizrt.payload+xml;type=element");
+//	    conn.setConnectTimeout(3000);
+//	    conn.setReadTimeout(3000);
+//
+//	    System.out.println("====================================");
+//	    System.out.println(step);
+//	    System.out.println("URL : " + mseUrl);
+//	    System.out.println("XML : ");
+//	    System.out.println(xml);
+//	    System.out.println("====================================");
+//
+//	    try (java.io.OutputStream os = conn.getOutputStream()) {
+//	        os.write(xml.getBytes("UTF-8"));
+//	        os.flush();
+//	    }
+//
+//	    int responseCode = conn.getResponseCode();
+//
+//	    System.out.println(step + " -> HTTP " + responseCode);
+//
+//	    java.io.InputStream is;
+//
+//	    if (responseCode >= 200 && responseCode < 300) {
+//	        is = conn.getInputStream();
+//	    } else {
+//	        is = conn.getErrorStream();
+//	    }
+//
+//	    if (is != null) {
+//
+//	        try (java.io.BufferedReader br =
+//	                new java.io.BufferedReader(
+//	                        new java.io.InputStreamReader(is))) {
+//
+//	            String line;
+//
+//	            System.out.println("----- RESPONSE -----");
+//
+//	            while ((line = br.readLine()) != null) {
+//	                System.out.println(line);
+//	            }
+//
+//	            System.out.println("--------------------");
+//	        }
+//	    }
+//
+//	    conn.disconnect();
+//	}
+	
 	public void DoadWriteToTrio(PrintWriter print_writer,String sendCommand) {
 		print_writer.println(sendCommand + return_key + line_feed);
 	}
@@ -3748,6 +4566,517 @@ public class DOAD_TRIO extends Scene{
 		
 		return name + "," + runs + "," + wicket;
 		
+	}
+	private void sendVizMSEBoundaryPage(String pageName, MatchAllData match, int inningNumber,String ipAddress,String showName) {
+
+		 String[] urls = getShowIdAndURL(pageName,match,ipAddress,"RunsAndBall",showName);
+
+		    String modelUrl = urls[0];
+		    String putUrl   = urls[1];       
+
+	    String totalFours = "0";
+	    String totalSixes = "0";
+	    String fourHeader = "";
+	    
+	    for (Inning inn : match.getMatch().getInning()) {
+	        if (inn.getInningNumber() == inningNumber) {
+	            totalFours = String.valueOf(inn.getTotalFours());
+	            totalSixes = String.valueOf(inn.getTotalSixes());
+	           fourHeader = "FOUR" + CricketFunctions.Plural(inn.getTotalFours()).toUpperCase();
+	        }
+	    }
+
+	    String payloadXml =
+	          "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+	        + "<payload xmlns=\"http://www.vizrt.com/types\"\n"
+	        + "         model=\"" + modelUrl + "\">\n"
+	        + "  <field name=\"003-Header\"><value>BOUNDARIES</value></field>\n"
+	        + "  <field name=\"100-HEADER\"><value>" + fourHeader + "</value></field>\n"
+	        + "  <field name=\"101-RUNS\"><value>"   + totalFours + "</value></field>\n"
+	        + "  <field name=\"102-HEADER\"><value>SIXES</value></field>\n"
+	        + "  <field name=\"103-BALLS\"><value>"  + totalSixes + "</value></field>\n"
+	        + "</payload>";
+
+	    putMethod(putUrl,payloadXml);
+	}
+	
+
+
+//	private int msePutPage(String baseUrl, String showGuid, String pageNumber, String payloadXml)
+//	        throws Exception {
+//
+//	    String url = baseUrl + "/element_collection/storage/shows/%7B"
+//	               + showGuid + "%7D/elements/" + pageNumber + "/";
+//
+//	    System.out.println("[MSE] PUT -> " + url);
+//
+//	    HttpRequest request = HttpRequest.newBuilder()
+//	            .uri(URI.create(url))
+//	            .PUT(HttpRequest.BodyPublishers.ofString(payloadXml))
+//	            .header("Content-Type", "application/vnd.vizrt.payload+xml;type=element")
+//	            .timeout(Duration.ofSeconds(5))
+//	            .build();
+//
+//	    HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+//	    System.out.println("[MSE] PUT response: " + response.body());
+//	    return response.statusCode();
+//	}
+//
+//	private int msePostPage(String baseUrl, String showGuid, String pageNumber, String payloadXml)
+//	        throws Exception {
+//
+//	    String url = baseUrl + "/element_collection/storage/shows/%7B" + showGuid + "%7D/";
+//
+//	    System.out.println("[MSE] POST -> " + url);
+//
+//	    HttpRequest request = HttpRequest.newBuilder()
+//	            .uri(URI.create(url))
+//	            .POST(HttpRequest.BodyPublishers.ofString(payloadXml))
+//	            .header("Content-Type", "application/vnd.vizrt.payload+xml;type=element")
+//	            .header("Slug", pageNumber)
+//	            .timeout(Duration.ofSeconds(5))
+//	            .build();
+//
+//	    HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+//	    System.out.println("[MSE] POST response: " + response.body());
+//	    return response.statusCode();
+//	}
+
+	private String buildBoundaryPayload(String modelUrl, String totalFours, String totalSixes, String fourHeader) {
+	    return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+	        + "<payload xmlns=\"http://www.vizrt.com/types\"\n"
+	        + "         model=\"" + modelUrl + "\">\n"
+	        + "  <field name=\"003-Header\"><value>BOUNDARIES</value></field>\n"
+	        + "  <field name=\"100-HEADER\"><value>" + escapeXml(fourHeader) + "</value></field>\n"
+	        + "  <field name=\"101-RUNS\"><value>"   + escapeXml(totalFours) + "</value></field>\n"
+	        + "  <field name=\"102-HEADER\"><value>SIXES</value></field>\n"
+	        + "  <field name=\"103-BALLS\"><value>"  + escapeXml(totalSixes) + "</value></field>\n"
+	        + "</payload>";
+	}
+
+	private String escapeXml(String text) {
+	    if (text == null) return "";
+	    return text.replace("&", "&amp;")
+	               .replace("<", "&lt;")
+	               .replace(">", "&gt;")
+	               .replace("\"", "&quot;")
+	               .replace("'", "&apos;");
+	}
+	private void sendVizMSEEquationPage(String pageName, MatchAllData match,String ipAddress,String showName) {
+
+		
+		 String[] urls = getShowIdAndURL(pageName,match,ipAddress,"RunsAndBall",showName);
+
+		    String modelUrl = urls[0];
+		    String putUrl   = urls[1];
+
+		  // Get target data
+	    String remainingRuns = String.valueOf(
+	            CricketFunctions.GetTargetData(match).getRemaningRuns());
+	    String remainingBalls = String.valueOf(
+	            CricketFunctions.GetTargetData(match).getRemaningBall());
+
+	    String payloadXml =
+	          "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+	        + "<payload xmlns=\"http://www.vizrt.com/types\"\n"
+	        + "         model=\"" + modelUrl + "\">\n"
+	        + "  <field name=\"003-Header\"><value>TARGET</value></field>\n"
+	        + "  <field name=\"100-HEADER\"><value>NEED</value></field>\n"
+	        + "  <field name=\"101-RUNS\"><value>" + remainingRuns + "</value></field>\n"
+	        + "  <field name=\"102-HEADER\"><value>FROM</value></field>\n"
+	        + "  <field name=\"103-BALLS\"><value>" + remainingBalls + "</value></field>\n"
+	        + "</payload>";
+
+		    System.out.println("=== MSE EQUATION PUT URL ===");
+		    System.out.println(putUrl);
+		    System.out.println("=== PAYLOAD ===");
+		    System.out.println(payloadXml);
+		    System.out.println("===============");
+
+	     putMethod(putUrl,payloadXml);
+	}
+	private String getShowGuid(String showName,String ipAddress) {
+
+	    try {
+	    	
+	        HttpRequest request = HttpRequest.newBuilder()
+	                .uri(URI.create("http://"+ ipAddress  +":8580/directory/shows/"))
+	                .GET()
+	                .build();
+
+	        HttpResponse<String> response =
+	                HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+
+	        String xml = response.body();
+
+	        DocumentBuilderFactory factory =
+	                DocumentBuilderFactory.newInstance();
+
+	        factory.setNamespaceAware(false);
+
+	        DocumentBuilder builder =
+	                factory.newDocumentBuilder();
+
+	        Document document =
+	                builder.parse(new InputSource(new StringReader(xml)));
+
+	        NodeList entries = document.getElementsByTagName("entry");
+
+	        for (int i = 0; i < entries.getLength(); i++) {
+
+	            Element entry = (Element) entries.item(i);
+
+	            String title =
+	                    entry.getElementsByTagName("title")
+	                            .item(0)
+	                            .getTextContent();
+
+	            if (showName.equalsIgnoreCase(title)) {
+
+	                NodeList links =
+	                        entry.getElementsByTagName("link");
+
+	                for (int j = 0; j < links.getLength(); j++) {
+
+	                    Element link = (Element) links.item(j);
+
+	                    String href = link.getAttribute("href");
+
+	                    if (href.contains("/show/")) {
+
+	                        int start = href.indexOf("/show/") + 6;
+	                        int end = href.lastIndexOf("/");
+
+	                        String guid = href.substring(start, end);
+
+	                        System.out.println(
+	                                "Found Show GUID for "
+	                                + showName + " : "
+	                                + guid);
+
+	                        return guid;
+	                    }
+	                }
+	            }
+	        }
+
+	        throw new RuntimeException(
+	                "Show not found : " + showName);
+
+	    } catch (Exception e) {
+
+	        e.printStackTrace();
+
+	        throw new RuntimeException(
+	                "Unable to fetch show GUID", e);
+	    }
+	}
+	
+	
+	private void sendVizMSEMostWicketsPage(String pageName,MatchAllData match,List<Tournament> tournament_stats,CricketService cricketService,
+	        String cat,String ipAddress,String showName) {
+			
+			String[] urls = getShowIdAndURL(pageName,match,ipAddress,"Leaderboard",showName);
+
+		    String modelUrl = urls[0];
+		    String putUrl   = urls[1];
+			try {
+			
+			String payloadXml =
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+			+ "<payload xmlns=\"http://www.vizrt.com/types\"\n"
+			+ "         model=\"" + modelUrl + "\">\n"
+			+ "  <field name=\"004-SELECT_CAP\"><value>2</value></field>\n"
+			+ "  <field name=\"003-HEADER\"><value>MOST WICKETS</value></field>\n";
+			
+			
+			int max = Math.min(5, tournament_stats.size());
+			
+			for (int i = 0; i < max; i++) {
+			
+			Tournament t = tournament_stats.get(i);
+			int row = i + 1;
+			
+			Team team = cricketService.getTeams()
+			.stream()
+			.filter(tm -> tm.getTeamId() == t.getPlayer().getTeamId())
+			.findFirst()
+			.orElse(null);
+			
+			String teamBadge = (team != null) ? team.getTeamBadge() : "";
+			String playerName = t.getPlayer().getTicker_name();
+			String runs = String.valueOf(t.getWickets());
+			
+			String imagePath = "";
+			
+			if (team != null) {
+			imagePath =
+			"C:\\\\Images\\\\T20_MUMBAI\\\\PHOTOS\\"
+			+ cat + "\\\\BIG_1024\\\\"
+			+ team.getTeamName4() + "\\\\"
+			+ t.getPlayer().getPhoto()
+			+ CricketUtil.PNG_EXTENSION;
+			}
+			
+			payloadXml +=
+			"  <field name=\"" + row + "00-TEAMNAME\"><value>"
+			    + teamBadge + "</value></field>\n"
+			+ "  <field name=\"" + row + "02-NAME\"><value>"
+			    + playerName + "</value></field>\n"
+			+ "  <field name=\"" + row + "05-STAT\"><value>"
+			    + runs + "</value></field>\n"
+			 + "  <field name=\"" + row + "04-STAT\"><value>"
+			    + (i+1) + "</value></field>\n"
+			+ "  <field name=\"" + row + "01-PLAYER-IMAGE\"><value>"
+			    + imagePath + "</value></field>\n";
+			}
+			
+			payloadXml += "</payload>";
+			
+			System.out.println("=== MSE MOST RUNS PUT URL ===");
+			System.out.println(putUrl);
+			System.out.println("=== PAYLOAD ===");
+			System.out.println(payloadXml);
+			
+			putMethod(putUrl,payloadXml);
+			
+			} catch (Exception e) {
+			System.err.println("[MSE] ERROR in sendVizMSEMostRunsPage: " + e.getMessage());
+			e.printStackTrace();
+			}
+	}
+			private void sendVizMSELastXBallsPage(String pageName,
+		            MatchAllData match,
+		            int ballNo,
+		            String ipAddress,
+		            String showName) {
+		
+		String[] urls = getShowIdAndURL(
+		pageName,
+		match,
+		ipAddress,
+		"RunsAndBall",
+		showName);
+		
+		String modelUrl = urls[0];
+		String putUrl   = urls[1];
+		
+		List<String> thisDataStr = new ArrayList<>();
+		
+		thisDataStr.add(
+		CricketFunctions.getlastthirtyballsdata(
+		match,
+		"-",
+		match.getEventFile().getEvents(),
+		ballNo));
+		
+		String[] data =
+		thisDataStr.get(thisDataStr.size() - 1).split("-");
+		
+		int runs = Integer.parseInt(data[0]);
+		int wickets = Integer.parseInt(data[1]);
+		
+		String runHeader =
+		"RUN" + CricketFunctions.Plural(runs).toUpperCase();
+		
+		String wicketHeader =
+		"WICKET" + CricketFunctions.Plural(wickets).toUpperCase();
+		
+		String payloadXml =
+		"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		+ "<payload xmlns=\"http://www.vizrt.com/types\"\n"
+		+ "         model=\"" + modelUrl + "\">\n"
+		
+		+ "  <field name=\"003-Header\"><value>LAST "
+		+ ballNo
+		+ " BALLS</value></field>\n"
+		
+		+ "  <field name=\"100-HEADER\"><value>"
+		+ runHeader
+		+ "</value></field>\n"
+		
+		+ "  <field name=\"101-RUNS\"><value>"
+		+ runs
+		+ "</value></field>\n"
+		
+		+ "  <field name=\"102-HEADER\"><value>"
+		+ wicketHeader
+		+ "</value></field>\n"
+		
+		+ "  <field name=\"103-BALLS\"><value>"
+		+ wickets
+		+ "</value></field>\n"
+		
+		+ "</payload>";
+		
+		putMethod(putUrl, payloadXml);
+		}
+	
+	
+			private void sendVizMSEVictoryPage(String pageName,
+                    MatchAllData match,
+                    String ipAddress,
+                    String showName) {
+			
+			String[] urls = getShowIdAndURL(
+			pageName,
+			match,
+			ipAddress,
+			"Victory",
+			showName);
+			
+			String modelUrl = urls[0];
+			String putUrl = urls[1];
+			
+			String targetOrResult =
+			CricketFunctions.GenerateMatchSummaryStatus(
+			     2,
+			     match,
+			     CricketUtil.FULL,
+			     "",
+			     "T20_MUMBAI",
+			     true)
+			.getTargetOrResult();
+			
+			String result =
+			"WIN "
+			+ targetOrResult
+			     .split("win")[1]
+			     .replace("remaining", "to spare")
+			     .toUpperCase();
+			
+			String payloadXml =
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+			+ "<payload xmlns=\"http://www.vizrt.com/types\"\n"
+			+ "         model=\"" + modelUrl + "\">\n"
+			
+			+ "  <field name=\"003-Header\">"
+			+ "<value>" + result + "</value></field>\n"
+			
+			+ "  <field name=\"004-Header\">"
+			+ "<value></value></field>\n"
+			
+			+ "</payload>";
+			
+			putMethod(putUrl, payloadXml);
+			}
+			
+						
+	private void sendVizMSEMostRunsPage(String pageName,MatchAllData match,List<Tournament> tournament_stats,CricketService cricketService,
+        String cat,String ipAddress,String showName) {
+		
+		String[] urls = getShowIdAndURL(pageName,match,ipAddress,"Leaderboard",showName);
+
+	    String modelUrl = urls[0];
+	    String putUrl   = urls[1];
+		try {
+		
+		String payloadXml =
+		"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		+ "<payload xmlns=\"http://www.vizrt.com/types\"\n"
+		+ "         model=\"" + modelUrl + "\">\n"
+		+ "  <field name=\"004-SELECT_CAP\"><value>1</value></field>\n"
+		+ "  <field name=\"003-HEADER\"><value>MOST RUNS</value></field>\n";
+		
+		
+		int max = Math.min(5, tournament_stats.size());
+		
+		for (int i = 0; i < max; i++) {
+		
+		Tournament t = tournament_stats.get(i);
+		int row = i + 1;
+		
+		Team team = cricketService.getTeams()
+		.stream()
+		.filter(tm -> tm.getTeamId() == t.getPlayer().getTeamId())
+		.findFirst()
+		.orElse(null);
+		
+		String teamBadge = (team != null) ? team.getTeamBadge() : "";
+		String playerName = t.getPlayer().getTicker_name();
+		String runs = String.valueOf(t.getRuns());
+		
+		String imagePath = "";
+		
+		if (team != null) {
+		imagePath =
+		"C:\\\\Images\\\\T20_MUMBAI\\\\PHOTOS\\"
+		+ cat + "\\\\BIG_1024\\\\"
+		+ team.getTeamName4() + "\\\\"
+		+ t.getPlayer().getPhoto()
+		+ CricketUtil.PNG_EXTENSION;
+		}
+		
+		payloadXml +=
+		"  <field name=\"" + row + "00-TEAMNAME\"><value>"
+		    + teamBadge + "</value></field>\n"
+		+ "  <field name=\"" + row + "02-NAME\"><value>"
+		    + playerName + "</value></field>\n"
+		+ "  <field name=\"" + row + "05-STAT\"><value>"
+		    + runs + "</value></field>\n"
+		 + "  <field name=\"" + row + "04-STAT\"><value>"
+		    + (i+1) + "</value></field>\n"
+		+ "  <field name=\"" + row + "01-PLAYER-IMAGE\"><value>"
+		    + imagePath + "</value></field>\n";
+		}
+		
+		payloadXml += "</payload>";
+		
+		System.out.println("=== MSE MOST RUNS PUT URL ===");
+		System.out.println(putUrl);
+		System.out.println("=== PAYLOAD ===");
+		System.out.println(payloadXml);
+		
+		putMethod(putUrl,payloadXml);
+		
+		} catch (Exception e) {
+		System.err.println("[MSE] ERROR in sendVizMSEMostRunsPage: " + e.getMessage());
+		e.printStackTrace();
+		}
+}
+	
+	private String[] getShowIdAndURL(String pageName, MatchAllData match,String iP,String templateName,String showName){
+		
+		String SHOW_GUID = getShowGuid(showName,iP);
+	    String BASE_URL  = "http://" + iP + ":8580";
+	    String TEMPLATE  = templateName;
+	    String PAGE_NO   = pageName;
+	    String modelUrl = BASE_URL + "/models/vdf/storage/shows/"
+	                    + SHOW_GUID + "/mastertemplates/" + TEMPLATE;
+
+	    String putUrl = BASE_URL + "/element_collection/storage/shows/"
+	                  + SHOW_GUID + "/elements/" + PAGE_NO + "/";
+	    
+	   
+	    return new String[]{modelUrl, putUrl};
+
+	}
+	private void putMethod(String putUrl,String payloadXml) {
+		try {
+	        HttpRequest request = HttpRequest.newBuilder()
+	                .uri(URI.create(putUrl))
+	                .PUT(HttpRequest.BodyPublishers.ofString(payloadXml))
+	                .header("Content-Type",
+	                        "application/vnd.vizrt.payload+xml;type=element")
+	                .timeout(Duration.ofSeconds(5))
+	                .build();
+
+	        HttpResponse<String> response = HTTP_CLIENT.send(
+	                request, HttpResponse.BodyHandlers.ofString());
+
+	        System.out.println("[MSE] HTTP " + response.statusCode());
+	        System.out.println("[MSE] Response: " + response.body());
+
+	        if (response.statusCode() == 200) {
+	            System.out.println("page update");
+	        } else {
+	            System.out.println(" error " + response.statusCode());
+	        }
+
+	    } catch (Exception e) {
+	        System.err.println(" error: " + e.getMessage());
+	        e.printStackTrace();
+	    }
 	}
 	
 }

@@ -54,6 +54,7 @@ public class IndexController
 	
 	public static String expiry_date = "2026-12-31";
 	public static String current_date = "";
+	public static String iPadd = "",showname= "";
 	public static String error_message = "";
 	public static long last_match_time_stamp = 0;
 	public static DOAD_TRIO this_DOAD_TRIO;
@@ -68,6 +69,7 @@ public class IndexController
 	public static String mainCricketDir = CricketUtil.CRICKET_DIRECTORY;
 	public List<StatsType> allStatsType = new ArrayList<StatsType>();
 	public List<Statistics> allStatistics = new ArrayList<Statistics>();
+	public List<OverByOverData> manhattan, manhattan2 = new ArrayList<OverByOverData>();
 	public static PrintWriter print_writer;
 	public static List<Tournament> pastTournament = new ArrayList<Tournament>();
 	public static List<BestStats> past_tape = new ArrayList<BestStats>();
@@ -144,6 +146,7 @@ public class IndexController
 			@RequestParam(value = "selectedCricketDirectory", required = false, defaultValue = "") String selectedCricketDirectory,
 			@RequestParam(value = "vizIPAddress", required = false, defaultValue = "") String vizIPAddress,
 			@RequestParam(value = "vizPortNumber", required = false, defaultValue = "") String vizPortNumber,
+			@RequestParam(value = "vizshowname", required = false, defaultValue = "") String vizshowname,
 			@RequestParam(value = "Category", required = false, defaultValue = "") String Category) 
 					throws UnknownHostException, IOException, JAXBException, IllegalAccessException, InvocationTargetException, ParseException, URISyntaxException, InvalidFormatException 
 	{
@@ -159,6 +162,9 @@ public class IndexController
 			
 		}else {
 			
+			iPadd = vizIPAddress;
+			showname = vizshowname;
+			session_Configurations.setShowName(vizshowname);
 			session_Configurations.setBroadcaster(selectedBroadcaster);
 			session_Configurations.setPrimaryIpAddress(vizIPAddress);
 			session_Configurations.setCricketDirectory(selectedCricketDirectory);
@@ -325,6 +331,18 @@ public class IndexController
 			return objectMapper.writeValueAsString(session_match).toString();
 		case "POPULATE_PREVIEW_BATPROFILE": case "POPULATE_PREVIEW_BALLLPROFILE": case "POPULATE_PREVIEW_OPENERRPROFILE":
 			return objectMapper.writeValueAsString(GetPreviewData(valueToProcess,null,session_match,whatToProcess)).toString();
+		case "LASTX_GRAPHIC_OPTIONS":
+			int innnuber =0;
+			for (Inning inn : session_match.getMatch().getInning()) {
+			if (inn.getIsCurrentInning().equalsIgnoreCase(CricketUtil.YES)) {
+				 innnuber = inn.getInningNumber();	
+			}
+		} 
+			manhattan = CricketFunctions.getOverByOverData(session_match, innnuber,"MANHATTAN" ,session_match.getEventFile().getEvents());
+			if(manhattan == null) {
+				return "populateManhattan is null";
+			}
+			 return objectMapper.writeValueAsString(manhattan).toString(); 
 		case "READ-MATCH-AND-POPULATE":
 			if(session_match == null) {
 				return objectMapper.writeValueAsString(null).toString();
@@ -343,7 +361,7 @@ public class IndexController
 			switch (session_Configurations.getBroadcaster()) {
 			case CricketUtil.DOAD_TRIO:
 				this_DOAD_TRIO.ProcessGraphicOption(whatToProcess, cricketService, session_match, print_writer, headToHead, pastTournament,
-						past_tape, valueToProcess, session_Configurations.getCategory());
+						past_tape, valueToProcess, session_Configurations.getCategory(),iPadd,showname);
 			}
 			return objectMapper.writeValueAsString(session_match).toString();
 		}
