@@ -203,7 +203,7 @@ function initialiseForm(whatToProcess,dataToProcess)
 	}
 }	
 function processUserSelectionData(whatToProcess,dataToProcess){
-//	alert(dataToProcess);
+	alert(dataToProcess);
 	switch (whatToProcess) {
 	case 'LOGGER_FORM_KEYPRESS':
 		switch (dataToProcess) {
@@ -367,13 +367,6 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			$("#expiry_message").hide();
 			addItemsToList('PLAYERPROFILEBATAUCTION_OPTIONS',null);
 			break;*/
-		/*		
-		case 115://F4 - MATCH SUMMARY
-			$("#captions_div").hide();
-			$("#cancel_match_setup_btn").hide();
-			$("#expiry_message").hide();
-			addItemsToList('POPULATE_FF_CURRENT_MATCH_SUMMARY',null);
-			break;*/
 			
 		case 76: //caption l (Alt_r) 
 			processCricketProcedures('RE_READ_DATA');
@@ -428,12 +421,18 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			$("#expiry_message").hide();
 			processCricketProcedures('ISPL_PREVIOUS_MATCH_SUMMARY_GRAPHIC_OPTIONS');
 			break;	*/
-		case 117://F6 - PREVIOUS MATCH SUMMARY
+		/*case 117://F6 - PREVIOUS MATCH SUMMARY
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
 			processCricketProcedures('ISPL_PREVIOUS_MATCH_SUMMARY_OPTIONS');
-			break;
+			break;*/
+		case 117://F6 - MATCH SUMMARY
+			$("#captions_div").hide();
+			$("#cancel_match_setup_btn").hide();
+			$("#expiry_message").hide();
+			addItemsToList('POPULATE_FF_CURRENT_MATCH_SUMMARY',null);
+			break;	
 		case 118://F7 - Next to BAt
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
@@ -447,24 +446,18 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			$("#expiry_message").hide();
 			addItemsToList('ISPL_TOSS_OPTIONS',null);
 			break;
-		case 86://v - Vixtory -used
+		/*case 86://v - Vixtory -used
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
 			addItemsToList('VICTORY_OPTIONS',null);
-			break;	
+			break;*/	
 		case 89: // y - last x balls
 		    $("#captions_div").hide();
 		    $("#cancel_match_setup_btn").hide();
 		    $("#expiry_message").hide();
 		   addItemsToList('POPULATE_LASTXBALLS', null);
 		    break;	
-		/*case 77://m - <MAtchid>
-			$("#captions_div").hide();
-			$("#cancel_match_setup_btn").hide();
-			$("#expiry_message").hide();
-			addItemsToList('MATCHID_OPTIONS',null);
-			break;*/
 		/*case 77://j Auction profile
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
@@ -478,6 +471,12 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			//addItemsToList('POPULATE_MOSTRUNS',null);
 			processCricketProcedures('POPULATE_MOSTRUNS');
 			break;	
+		case 86://v - Vixtory -used
+			$("#captions_div").hide();
+			$("#cancel_match_setup_btn").hide();
+			$("#expiry_message").hide();
+			processCricketProcedures('POPULATE_MOSTRUNS_TRY');
+			break;	
 		case 87: // w - most wickets
 		    $("#captions_div").hide();
 		    $("#cancel_match_setup_btn").hide();
@@ -485,6 +484,12 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 		   // addItemsToList('POPULATE_MOSTWKTS', null);
 		    processCricketProcedures('POPULATE_MOSTWKTS');
 		    break;	
+		case 77://m - <MAtchid>
+			$("#captions_div").hide();
+			$("#cancel_match_setup_btn").hide();
+			$("#expiry_message").hide();
+			addItemsToList('MATCHID_OPTIONS',null);
+			break;	
 							
 			
 		}
@@ -602,6 +607,10 @@ function processUserSelection(whichInput)
 	case "populate_graphics_mostruns":
 		processCricketProcedures('POPULATE_GRAPHICS_MOSTRUNS');
 		break;
+		
+	case "populate_graphics_mostruns_try":
+		processCricketProcedures('POPULATE_GRAPHICS_MOSTRUNS_TRY');
+		break;		
 	case "populate_graphics_tapeballover":
 		processCricketProcedures('POPULATE_GRAPHICS_TAPEBALL');
 		break;
@@ -726,13 +735,16 @@ function processCricketProcedures(whatToProcess)
 	case "POPULATE_GRAPHICS_TOSS":	
 		valueToProcess = $('#selecttoss').val() + ',' + $('#savePointsTable').val();
 	    break;
-	case"POPULATE_GRAPHICS_COMPARISION":case"POPULATE_GRAPHICS_NEXT_TO_BAT":case "POPULATE_ISPL_FF_MATCH_SUMMARY": case "POPULATE_GRAPHICS_TARGET":  case "POPULATE_GRAPHICS_MVP_LEADERBOARD":
+	case"POPULATE_GRAPHICS_COMPARISION":case"POPULATE_GRAPHICS_NEXT_TO_BAT": case "POPULATE_GRAPHICS_TARGET":  case "POPULATE_GRAPHICS_MVP_LEADERBOARD":
 	case "POPULATE_GRAPHICS_MATCHID": case "POPULATE_GRAPHICS_MVP":  case "POPULATE_GRAPHICS_VCTORYY":  case "POPULATE_GRAPHICS_EQUATION":  case "POPULATE_GRAPHICS_REQUIREDRUNRATE":
 	case "POPULATE_GRAPHICS_PROJECTED": case "POPULATE_GRAPHICS_CURRENTPARTERNERSHIP": case "POPULATE_GRAPHICS_UPLINE":
 	 	valueToProcess = $('#savePointsTable').val() + ',' + $('#selectgraphictype').val();
 		break;
+	case "POPULATE_ISPL_FF_MATCH_SUMMARY":
+		valueToProcess = $('#savePointsTable').val() + ',' + document.getElementById('which_keypress').value;
+		break;		
 	case "POPULATE_GRAPHICS_MOSTRUNS": case "POPULATE_GRAPHICS_MOSTWKTS": case "POPULATE_GRAPHICS_MOSTSIXES": case "POPULATE_GRAPHICS_MOSTFOURS":
-	 case "POPULATE_GRAPHICS_MOSTNINE": case "POPULATE_GRAPHICS_TAPEBALL":
+	 case "POPULATE_GRAPHICS_MOSTNINE": case "POPULATE_GRAPHICS_TAPEBALL": case "POPULATE_GRAPHICS_MOSTRUNS_TRY":
 		valueToProcess = $('#savePointsTable').val() + ',' + $('#selectGraphictype').val()+ ',' + $('#selectPlayerName').val();
 		 break;	
 	case 'POPULATE-LASTXBALLS_VR': 
@@ -808,9 +820,12 @@ function processCricketProcedures(whatToProcess)
 			case 'LASTX_GRAPHIC_OPTIONS':
 				addItemsToList('LAST_XOVERS_OPTIONSS',data);
 				break;		
-			case 'POPULATE_MOSTRUNS':
+			case 'POPULATE_MOSTRUNS': 
 				addItemsToList('MOST_RUNS_GRAPHIC_OPTION',data);
 				break;
+			case 'POPULATE_MOSTRUNS_TRY':
+				addItemsToList('MOST_RUNS_GRAPHIC_OPTION_TRY',data);
+				break;	
 			case 'ISPL_TAPEBALL_GRAPHIC_OPTIONS':
 				addItemsToList('ISPLTAPEBALLOVER_GRAPHIC_OPTION',data);
 				break;		
@@ -2160,9 +2175,9 @@ function addItemsToList(whatToProcess, dataToProcess)
 		case 'LOAD_GRAPHICS-OPTION':case 'GRAPHICS': case 'ISPL_50_50_OPTIONS': case 'ISPL_BALL_OPTIONS':case 'ISPL_NEXT_BAT_OPTIONS':case'ISPL_COMPARISION_OPTIONS':
 		case "ISPL_LINEUP_OPTIONS":case "ISPL_PREVIOUS_MATCH_SUMMARY_OPTIONSS": case 'LAST_XOVERS_OPTIONSS': case 'POPULATE_FF_CURRENT_MATCH_SUMMARY': case 'FIXTURE_OPTIONS': 
 		case "ISPL_TARGET_OPTIONS": case "ISPL_POJECTED_OPTIONS": case "ISPL_TOSS_OPTIONS": case "VICTORY_OPTIONS": case "ISPL_EQUATION_OPTIONS": case "ISPL_MVP_OPTIONS": case "MATCHID_OPTIONS":
-		 case "MOST_RUNS_GRAPHIC_OPTION": case "ISPLTAPEBALLOVER_GRAPHIC_OPTION": case "MOST_WKTS_GRAPHIC_OPTION": case "MOST__GRAFOURS_PHIC_OPTION": case 'MOST_SIX_GRAPHIC_OPTION':
+		 case "MOST_RUNS_GRAPHIC_OPTION": case 'POPULATE_MOSTRUNS_TRY': case "ISPLTAPEBALLOVER_GRAPHIC_OPTION": case "MOST_WKTS_GRAPHIC_OPTION": case "MOST__GRAFOURS_PHIC_OPTION": case 'MOST_SIX_GRAPHIC_OPTION':
 		case "ISPL_BOUNDARIES_OPTIONS": case "ISPL_MVP_OPTIONS_LEADERBOARD": case "MOST_NINE_GRAPHIC_OPTION":  case "POPULATE_LASTXBALLS": case "POPULATE_PARTNERSHIP":
-		case "LINEUP_GRAPHIC_OPTIONS": case "RUN_RATE-OPTION": case 'ISPL_PREVIOUS_MATCH_SUMMARY_GRAPHIC_OPTIONS': 
+		case "LINEUP_GRAPHIC_OPTIONS": case "RUN_RATE-OPTION": case 'ISPL_PREVIOUS_MATCH_SUMMARY_GRAPHIC_OPTIONS': case 'MOST_RUNS_GRAPHIC_OPTION_TRY':
 			switch ($('#select_broadcaster').val().toUpperCase()){
 				case 'DOAD_TRIO':
 					$('#select_graphic_options_div').empty();
@@ -2497,7 +2512,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 						    
 							document.getElementById('select_graphic_options_div').style.display = '';
 							break;
-						case 'MOST_RUNS_GRAPHIC_OPTION':
+						case 'MOST_RUNS_GRAPHIC_OPTION': 
 							select = document.createElement('select');
 							select.id = 'selectPlayerName';
 							select.name = select.id;
@@ -2565,6 +2580,74 @@ function addItemsToList(whatToProcess, dataToProcess)
 						    row.insertCell(3).appendChild(div);
 						    document.getElementById('select_graphic_options_div').style.display = '';
 							break;	
+						case 'MOST_RUNS_GRAPHIC_OPTION_TRY':
+							select = document.createElement('select');
+							select.id = 'selectPlayerName';
+							select.name = select.id;
+							num = 0;
+							for(i=0;i<dataToProcess.length;i++){
+								if(num<5){
+									option = document.createElement('option');
+						            option.value = (num+1)+ "_" + dataToProcess[i].playerId;
+						            option.text = dataToProcess[i].player.full_name;
+						            select.appendChild(option);
+						            num++;
+								}
+							}
+							row.insertCell(0).appendChild(select);
+							
+							select = document.createElement('select');
+						   select.id = 'selectGraphictype';
+						   select.name = select.id;
+						
+							option = document.createElement('option');
+							option.value = 'AR';
+							option.text = 'AR';
+							select.appendChild(option);
+							
+							option = document.createElement('option');
+							option.value = 'Drone';
+							option.text = 'Drone';
+							select.appendChild(option);
+							
+							row.insertCell(1).appendChild(select); 
+							
+							select = document.createElement('input');
+							select.type = "text";
+							select.id = 'savePointsTable';
+							select.value = '';
+							
+							header_text = document.createElement('label');
+							header_text.innerHTML = 'Page No.';
+							header_text.htmlFor = select.id;
+							
+							row.insertCell(2).appendChild(select);
+			
+					    	option = document.createElement('input');
+						    option.type = 'button';
+							
+							option = document.createElement('input');
+						    option.type = 'button';
+							option.name = 'populate_graphics_mostruns_try';
+							option.value = 'populate';
+						    option.id = option.name;
+						    option.setAttribute('onclick',"processUserSelection(this)");
+						    
+						    div = document.createElement('div');
+						    div.append(option);
+						
+							option = document.createElement('input');
+							option.type = 'button';
+							option.name = 'cancel_graphics_btn';
+							option.id = option.name;
+							option.value = 'Cancel';
+							option.setAttribute('onclick','processUserSelection(this)');
+						
+						    div.append(option);
+						    
+						    row.insertCell(3).appendChild(div);
+						    document.getElementById('select_graphic_options_div').style.display = '';
+							break;		
 						
 						case 'ISPLTAPEBALLOVER_GRAPHIC_OPTION':
 							select = document.createElement('select');

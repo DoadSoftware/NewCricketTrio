@@ -94,6 +94,8 @@ public class IndexController
 	            new CricketFunctions.BatsmanNinesComparator();
 
 	    map.put("POPULATE_MOSTRUNS", mostRuns);
+	    
+	    map.put("POPULATE_MOSTRUNS_TRY", mostRuns);
 
 	    map.put("POPULATE_MOSTWKTS", mostWickets);
 
@@ -303,7 +305,7 @@ public class IndexController
 			return objectMapper.writeValueAsString(map.keySet());
 		case "ISPL_PREVIOUS_MATCH_SUMMARY_OPTIONS":
 			return objectMapper.writeValueAsString(CricketFunctions.processAllFixtures(cricketService));
-		case "POPULATE_MOSTRUNS": case "POPULATE_MOSTWKTS": case "POPULATE_MOSTFOURS": case "POPULATE_MOSTSIXES": case "POPULATE_MOSTNINE":
+		case "POPULATE_MOSTRUNS": case "POPULATE_MOSTWKTS": case "POPULATE_MOSTFOURS": case "POPULATE_MOSTSIXES": case "POPULATE_MOSTNINE": case "POPULATE_MOSTRUNS_TRY":
 			List<Tournament> tournamentStats = CricketFunctions.extractTournamentData("CURRENT_MATCH_DATA", false, 
 					headToHead.getH2hPlayer(), cricketService, session_match, pastTournament);
 			
@@ -443,14 +445,14 @@ public class IndexController
 				}
 				
 				if(whatToProcess.split(",")[1].equalsIgnoreCase("ISPL S1") || whatToProcess.split(",")[1].equalsIgnoreCase("ISPL S2")) {
-					statsType = allStatsType.stream().filter(st -> st.getStats_short_name().equalsIgnoreCase(whatToProcess.split(",")[1])).findAny().orElse(null);
+					statsType = allStatsType.stream().filter(st -> st.getStatsShortName().equalsIgnoreCase(whatToProcess.split(",")[1])).findAny().orElse(null);
 					if(statsType == null) {
 						statsData.add("InfoBarPlayerProfile: Stats Type not found for profile [" + whatToProcess.split(",")[1] + "]");
 						return (List<T>) statsData;
 					}
 					final int thisPlyrId = player.getPlayerId();
-					final int thisStatsTypeId = statsType.getStats_id();
-					stat = allStatistics.stream().filter(st -> st.getPlayer_id() == thisPlyrId && st.getStats_type_id() == thisStatsTypeId).findAny().orElse(null);
+					final int thisStatsTypeId = statsType.getStatsId();
+					stat = allStatistics.stream().filter(st -> st.getPlayerID() == thisPlyrId && st.getStatsTypeId() == thisStatsTypeId).findAny().orElse(null);
 					if(stat == null) {
 						statsData.add("InfoBarPlayerProfile: Stats not found for Player Id [" + whatToProcess.split(",")[0] + "]");
 						return (List<T>) statsData;
@@ -471,7 +473,7 @@ public class IndexController
 //				    BeanUtils.copyProperties(statS1, stat);
 //				    stat = CricketFunctions.mergeIsplCareerStats(stat, statS2);
 //				    
-//					statsType =st.stream().filter(st -> st.getStats_short_name().equalsIgnoreCase("D10")).findAny().orElse(null);
+//					statsType =st.stream().filter(st -> st.getStatsShortName().equalsIgnoreCase("D10")).findAny().orElse(null);
 //					stat.setStats_type(statsType);
 //					
 //					stat = CricketFunctions.updateTournamentWithH2h(stat, headToHead.getH2hPlayer(), matchAllData, CricketUtil.FULL);
@@ -601,13 +603,13 @@ public class IndexController
 					switch ((valuetoproces.contains(",") ? valuetoproces.split(",")[0] : valuetoproces)) {
 					case "POPULATE_PREVIEW_BATPROFILE":
 						statsData.add("RUNS," + stat.getRuns());
-						statsData.add("STRIKE RATE," + CricketFunctions.generateStrikeRate(stat.getRuns(), stat.getBalls_faced(), 0));
-						statsData.add("BEST," + stat.getBest_score());
+						statsData.add("STRIKE RATE," + CricketFunctions.generateStrikeRate(stat.getRuns(), stat.getBallsFaced(), 0));
+						statsData.add("BEST," + stat.getBestScore());
 						break;
 					case "POPULATE_PREVIEW_BALLLPROFILE":
 						statsData.add("WICKETS," + stat.getWickets());
-						statsData.add("ECONOMY," + CricketFunctions.getEconomy(stat.getRuns_conceded(), stat.getBalls_bowled(), 2, "-"));
-						statsData.add("BEST," + stat.getBest_figures());
+						statsData.add("ECONOMY," + CricketFunctions.getEconomy(stat.getRunsConceded(), stat.getBallsBowled(), 2, "-"));
+						statsData.add("BEST," + stat.getBestFigures());
 						break;
 					}
 					break;
@@ -628,21 +630,21 @@ public class IndexController
 				}
 				
 				if(whatToProcess.split(",")[2].equalsIgnoreCase("ISPL S1") || whatToProcess.split(",")[2].equalsIgnoreCase("ISPL S2")) {
-					statsType = allStatsType.stream().filter(st -> st.getStats_short_name().equalsIgnoreCase(whatToProcess.split(",")[2])).findAny().orElse(null);
+					statsType = allStatsType.stream().filter(st -> st.getStatsShortName().equalsIgnoreCase(whatToProcess.split(",")[2])).findAny().orElse(null);
 					if(statsType == null) {
 						statsData.add("PlayerProfile: Stats Type not found for profile [" + whatToProcess.split(",")[2] + "]");
 					}
 					final int thisPlyrId = player.getPlayerId();
-					final int thisStatsTypeId = statsType.getStats_id();
-					stat = allStatistics.stream().filter(st -> st.getPlayer_id() == thisPlyrId && thisStatsTypeId == st.getStats_type_id()).findAny().orElse(null);
+					final int thisStatsTypeId = statsType.getStatsId();
+					stat = allStatistics.stream().filter(st -> st.getPlayerID() == thisPlyrId && thisStatsTypeId == st.getStatsTypeId()).findAny().orElse(null);
 					if(stat == null) {
 						statsData.add("PlayerProfile: Stats not found for Player Id [" + whatToProcess.split(",")[0] + "]");
 					}
 					stat.setStats_type(statsType);
 					
 					final int thisPlyr2Id = player2.getPlayerId();
-					final int thisStatsType2Id = statsType.getStats_id();
-					stat2 = allStatistics.stream().filter(st -> st.getPlayer_id() == thisPlyr2Id && thisStatsType2Id == st.getStats_type_id()).findAny().orElse(null);
+					final int thisStatsType2Id = statsType.getStatsId();
+					stat2 = allStatistics.stream().filter(st -> st.getPlayerID() == thisPlyr2Id && thisStatsType2Id == st.getStatsTypeId()).findAny().orElse(null);
 					if(stat2 == null) {
 						statsData2.add("PlayerProfile: Stats not found for Player Id [" + whatToProcess.split(",")[1] + "]");
 						statsData.addAll(statsData2);
@@ -667,7 +669,7 @@ public class IndexController
 //				    BeanUtils.copyProperties(statS1, stat);
 //				    stat = CricketFunctions.mergeIsplCareerStats(stat, statS2);
 //				    
-//					statsType =st.stream().filter(st -> st.getStats_short_name().equalsIgnoreCase("D10")).findAny().orElse(null);
+//					statsType =st.stream().filter(st -> st.getStatsShortName().equalsIgnoreCase("D10")).findAny().orElse(null);
 //					stat.setStats_type(statsType);
 //					
 //					stat = CricketFunctions.updateTournamentWithH2h(stat, headToHead.getH2hPlayer(), matchAllData, CricketUtil.FULL);
@@ -685,7 +687,7 @@ public class IndexController
 //				    BeanUtils.copyProperties(statS1P2, stat2);
 //				    stat2 = CricketFunctions.mergeIsplCareerStats(stat2, statS2P2);
 //				    
-//					statsType2 =st.stream().filter(st -> st.getStats_short_name().equalsIgnoreCase("D10")).findAny().orElse(null);
+//					statsType2 =st.stream().filter(st -> st.getStatsShortName().equalsIgnoreCase("D10")).findAny().orElse(null);
 //					stat2.setStats_type(statsType2);
 //					
 //					stat2 = CricketFunctions.updateTournamentWithH2h(stat2, headToHead.getH2hPlayer(), matchAllData, CricketUtil.FULL);
@@ -806,12 +808,12 @@ public class IndexController
 					switch ((valuetoproces.contains(",") ? valuetoproces.split(",")[0] : valuetoproces)) {
 					case "POPULATE_PREVIEW_OPENERRPROFILE":
 						statsData.add("RUNS," + stat.getRuns());
-						statsData.add("STRIKE RATE," + CricketFunctions.generateStrikeRate(stat.getRuns(), stat.getBalls_faced(), 0));
-						statsData.add("BEST," + stat.getBest_score());
+						statsData.add("STRIKE RATE," + CricketFunctions.generateStrikeRate(stat.getRuns(), stat.getBallsFaced(), 0));
+						statsData.add("BEST," + stat.getBestScore());
 						statsData.add("SEPARATOR,---");
 						statsData2.add("RUNS," + stat2.getRuns());
-						statsData2.add("STRIKE RATE," + CricketFunctions.generateStrikeRate(stat2.getRuns(), stat2.getBalls_faced(), 0));
-						statsData2.add("BEST," + stat2.getBest_score());
+						statsData2.add("STRIKE RATE," + CricketFunctions.generateStrikeRate(stat2.getRuns(), stat2.getBallsFaced(), 0));
+						statsData2.add("BEST," + stat2.getBestScore());
 						statsData.addAll(statsData2);
 						break;
 					}
