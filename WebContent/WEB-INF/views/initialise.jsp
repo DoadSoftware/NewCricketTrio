@@ -65,7 +65,9 @@
 			    <div class="col-sm-6 col-md-6">
 			      <select id="select_broadcaster" name="select_broadcaster" class="browser-default custom-select custom-select-sm"
 			      		onchange="processUserSelection(this)">
+			      		<option value="NPL">NPL</option>
 			          <option value="DOAD_TRIO">DOAD TRIO</option>
+			         
 			      </select>
 			    </div>			  
 			    <div id="vizPortNumber_div" class="form-group row row-bottom-margin ml-2" style="margin-bottom:5px;">

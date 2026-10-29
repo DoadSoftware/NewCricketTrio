@@ -36,6 +36,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import com.cricket.broadcaster.DOAD_TRIO;
+import com.cricket.broadcaster.NPL;
 import com.cricket.config.DatabaseContextHolder;
 import com.cricket.containers.Excel;
 import com.cricket.service.CricketService;
@@ -58,6 +59,7 @@ public class IndexController
 	public static String error_message = "";
 	public static long last_match_time_stamp = 0;
 	public static DOAD_TRIO this_DOAD_TRIO;
+	public static NPL this_NPL;
 	public static Excel this_Excel = new Excel();
 	public static String basePath = "",category="";
 	public static MatchStats MatchStats;
@@ -191,6 +193,7 @@ public class IndexController
 			}
 
 			this_DOAD_TRIO = new DOAD_TRIO(mainCricketDir);
+			this_NPL =new NPL(mainCricketDir);
 			
 			if(!vizIPAddress.trim().isEmpty()) {
 				session_Configurations.setPrimaryPortNumber(Integer.valueOf(vizPortNumber));
@@ -360,11 +363,17 @@ public class IndexController
 			}
 			return objectMapper.writeValueAsString(session_match).toString();
 		default:
+			System.out.println("session_Configurations.getBroadcaster()"+ session_Configurations.getBroadcaster());
 			switch (session_Configurations.getBroadcaster()) {
 			case CricketUtil.DOAD_TRIO:
 				this_DOAD_TRIO.ProcessGraphicOption(whatToProcess, cricketService, session_match, print_writer, headToHead, pastTournament,
 						past_tape, valueToProcess, session_Configurations.getCategory(),iPadd,showname);
-			}
+			
+			case "NPL":
+				System.out.println("cpmoin"+ session_Configurations.getBroadcaster());
+				this_NPL.ProcessGraphicOption(whatToProcess, cricketService, session_match, print_writer, headToHead, pastTournament,
+					past_tape, valueToProcess, session_Configurations.getCategory(),iPadd,showname);
+		}
 			return objectMapper.writeValueAsString(session_match).toString();
 		}
 	 }

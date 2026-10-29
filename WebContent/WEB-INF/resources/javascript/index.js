@@ -203,7 +203,7 @@ function initialiseForm(whatToProcess,dataToProcess)
 	}
 }	
 function processUserSelectionData(whatToProcess,dataToProcess){
-	alert(dataToProcess);
+	//alert(dataToProcess);
 	switch (whatToProcess) {
 	case 'LOGGER_FORM_KEYPRESS':
 		switch (dataToProcess) {
@@ -324,12 +324,12 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			$("#expiry_message").hide();
 			addItemsToList('ISPL_EQUATION_OPTIONS',null);
 			break;
-		case 119://F8 Bat profile
+		/*case 119://F8 Bat profile
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
 			addItemsToList('PLAYERPROFILEBAT_OPTIONS',null);
-			break;
+			break;*/
 		case 113://F2 - INAT - TOSS
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
@@ -355,18 +355,18 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			$("#expiry_message").hide();
 			addItemsToList('PLAYERPROFILEBALL_OPTIONS',null);
 			break;*/
-		/*case 75://k Auction profile
+		case 75://k BAll profile
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
 			addItemsToList('PLAYERPROFILEBALLAUCTION_OPTIONS',null);
 			break;
-		case 74://j Auction profile
+		case 74://j BAt profile
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
 			addItemsToList('PLAYERPROFILEBATAUCTION_OPTIONS',null);
-			break;*/
+			break;
 			
 		case 76: //caption l (Alt_r) 
 			processCricketProcedures('RE_READ_DATA');
@@ -446,12 +446,12 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			$("#expiry_message").hide();
 			addItemsToList('ISPL_TOSS_OPTIONS',null);
 			break;
-		/*case 86://v - Vixtory -used
+		case 86://v - Vixtory -used
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
 			addItemsToList('VICTORY_OPTIONS',null);
-			break;*/	
+			break;	
 		case 89: // y - last x balls
 		    $("#captions_div").hide();
 		    $("#cancel_match_setup_btn").hide();
@@ -464,12 +464,12 @@ function processUserSelectionData(whatToProcess,dataToProcess){
 			$("#expiry_message").hide();
 			addItemsToList('PLAYERMOSTRUN_OPTIONS',null);
 			break;	*/
-		case 74://j - most runs
+		/*case 74://j - most runs
 			$("#captions_div").hide();
 			$("#cancel_match_setup_btn").hide();
 			$("#expiry_message").hide();
 			//addItemsToList('POPULATE_MOSTRUNS',null);
-			processCricketProcedures('POPULATE_MOSTRUNS');
+			processCricketProcedures('POPULATE_MOSTRUNS');*/
 			break;	
 		case 86://v - Vixtory -used
 			$("#captions_div").hide();
@@ -1932,33 +1932,65 @@ function addItemsToList(whatToProcess, dataToProcess)
 			});
 			 row.insertCell(0).appendChild(select);
              
+			 
+		 /*switch ($('#select_broadcaster').val().toUpperCase()) {
+ 			case 'DOAD_TRIO':*/
+				  /* select = document.createElement('select');
+				   select.id = 'selectProfile';
+				   select.name = select.id;
+				
+					option = document.createElement('option');
+					option.value = 'ISPL S1';
+					option.text = 'ISPL S1';
+					select.appendChild(option);
+					
+					option = document.createElement('option');
+					option.value = 'ISPL S2';
+					option.text = 'ISPL S2';
+					select.appendChild(option);
+					
+					option = document.createElement('option');
+					option.value = 'ISPL_CAREER';
+					option.text = 'ISPL CAREER';
+					select.appendChild(option);
+					
+					option = document.createElement('option');
+					option.value = 'THIS SERIES';
+					option.text = 'THIS SERIES';
+					select.appendChild(option);
+					
+					row.insertCell(1).appendChild(select); 
+ 				break;*/
+ 			
+ 		//	case "NPL":
+					select = document.createElement('select');
+				    select.id = 'selectProfile';
+				    select.name = select.id;
+					
+					option = document.createElement('option');
+					option.value = 'NPL_CAREER';
+					option.text = 'NPL CAREER';
+					select.appendChild(option);
+
+					option = document.createElement('option');
+					option.value = 'DT20';
+					option.text = 'DT20';
+					select.appendChild(option);
+					
+					option = document.createElement('option');
+					option.value = 'IT20';
+					option.text = 'IT20';
+					select.appendChild(option);
+					
+					option = document.createElement('option');
+					option.value = 'THIS SERIES';
+					option.text = 'THIS SERIES';
+					select.appendChild(option);
+					
+					row.insertCell(1).appendChild(select); 
+ 			/*	break;
+			 }*/
                select = document.createElement('select');
-			   select.id = 'selectProfile';
-			   select.name = select.id;
-			
-				option = document.createElement('option');
-				option.value = 'ISPL S1';
-				option.text = 'ISPL S1';
-				select.appendChild(option);
-				
-				option = document.createElement('option');
-				option.value = 'ISPL S2';
-				option.text = 'ISPL S2';
-				select.appendChild(option);
-				
-				option = document.createElement('option');
-				option.value = 'ISPL_CAREER';
-				option.text = 'ISPL CAREER';
-				select.appendChild(option);
-				
-				option = document.createElement('option');
-				option.value = 'THIS SERIES';
-				option.text = 'THIS SERIES';
-				select.appendChild(option);
-				
-				row.insertCell(1).appendChild(select); 
-				
-				select = document.createElement('select');
 			   select.id = 'selectGraphicType';
 			   select.name = select.id;
 			
@@ -2080,32 +2112,64 @@ function addItemsToList(whatToProcess, dataToProcess)
              
              row.insertCell(0).appendChild(select);
              
-               select = document.createElement('select');
-			   select.id = 'selectProfile';
-			   select.name = select.id;
-			
-				option = document.createElement('option');
-				option.value = 'ISPL S1';
-				option.text = 'ISPL S1';
-				select.appendChild(option);
-				
-				option = document.createElement('option');
-				option.value = 'ISPL S2';
-				option.text = 'ISPL S2';
-				select.appendChild(option);
-				
-				option = document.createElement('option');
-				option.value = 'ISPL_CAREER';
-				option.text = 'ISPL CAREER';
-				select.appendChild(option);
-				
-				option = document.createElement('option');
-				option.value = 'THIS SERIES';
-				option.text = 'THIS SERIES';
-				select.appendChild(option);
-				
-				row.insertCell(1).appendChild(select); 
-				
+
+			/* switch (session_Configurations.getBroadcaster()) {
+			 case 'DOAD_TRIO':*/
+			    /*select = document.createElement('select');
+			    select.id = 'selectProfile';
+			    select.name = select.id;
+
+			 	option = document.createElement('option');
+			 	option.value = 'ISPL S1';
+			 	option.text = 'ISPL S1';
+			 	select.appendChild(option);
+			 	
+			 	option = document.createElement('option');
+			 	option.value = 'ISPL S2';
+			 	option.text = 'ISPL S2';
+			 	select.appendChild(option);
+			 	
+			 	option = document.createElement('option');
+			 	option.value = 'ISPL_CAREER';
+			 	option.text = 'ISPL CAREER';
+			 	select.appendChild(option);
+			 	
+			 	option = document.createElement('option');
+			 	option.value = 'THIS SERIES';
+			 	option.text = 'THIS SERIES';
+			 	select.appendChild(option);
+			 	
+			 	row.insertCell(1).appendChild(select);*/ 
+		//	 	break;
+
+		//	 case "NPL":
+			 	select = document.createElement('select');
+			     select.id = 'selectProfile';
+			     select.name = select.id;
+			 	
+			 	option = document.createElement('option');
+			 	option.value = 'NPL_CAREER';
+			 	option.text = 'NPL CAREER';
+			 	select.appendChild(option);
+
+			 	option = document.createElement('option');
+			 	option.value = 'DT20';
+			 	option.text = 'DT20';
+			 	select.appendChild(option);
+			 	
+			 	option = document.createElement('option');
+			 	option.value = 'IT20';
+			 	option.text = 'IT20';
+			 	select.appendChild(option);
+			 	
+			 	option = document.createElement('option');
+			 	option.value = 'THIS SERIES';
+			 	option.text = 'THIS SERIES';
+			 	select.appendChild(option);
+			 	
+			 	row.insertCell(1).appendChild(select); 
+			 /*	break; 
+				}*/
 				 select = document.createElement('select');
 			   select.id = 'selectGraphictype';
 			   select.name = select.id;
@@ -2179,7 +2243,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 		case "ISPL_BOUNDARIES_OPTIONS": case "ISPL_MVP_OPTIONS_LEADERBOARD": case "MOST_NINE_GRAPHIC_OPTION":  case "POPULATE_LASTXBALLS": case "POPULATE_PARTNERSHIP":
 		case "LINEUP_GRAPHIC_OPTIONS": case "RUN_RATE-OPTION": case 'ISPL_PREVIOUS_MATCH_SUMMARY_GRAPHIC_OPTIONS': case 'MOST_RUNS_GRAPHIC_OPTION_TRY':
 			switch ($('#select_broadcaster').val().toUpperCase()){
-				case 'DOAD_TRIO':
+				case 'DOAD_TRIO': case 'NPL':
 					$('#select_graphic_options_div').empty();
 	
 					header_text = document.createElement('h6');

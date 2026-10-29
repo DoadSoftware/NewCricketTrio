@@ -6,7 +6,7 @@
 
     <groupId>NewCricketTrio</groupId>
     <artifactId>NewCricketTrio</artifactId>
-    <version>5.1</version>
+    <version>5.3</version>
     <packaging>war</packaging>
 
     <name>NewCricketTrio</name>
@@ -27,7 +27,7 @@
         <dependency>
             <groupId>com.cricket</groupId>
             <artifactId>NewCricketLibrary</artifactId>
-            <version>4.23</version>
+            <version>4.41</version>
         </dependency>
 
         <dependency>

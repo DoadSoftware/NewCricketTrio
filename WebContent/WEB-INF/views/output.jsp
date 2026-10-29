@@ -140,21 +140,33 @@
                 </thead>
                 <tbody id="caption_working_tbody">
                   <!-- Row 1 -->
+                 <tr>
+                    <td>1</td><td>(m)</td><td>Match ID</td>
+                  </tr> 
                   <tr>
-                    <td>1</td><td>(b)</td><td>Comparison</td>
+                    <td>2</td><td>(b)</td><td>Comparison</td>
                   </tr>
                   <!-- Row 2 -->
                   <tr>
-                    <td>2</td><td>(c)</td><td>Equation</td>
+                    <td>3</td><td>(c)</td><td>Equation</td>
                   </tr>
                   <!-- Row 3 -->
                   <tr>
-                    <td>3</td><td>(a)</td><td>Projected</td>
+                    <td>4</td><td>(a)</td><td>Projected</td>
                   </tr>
                  <!-- Row 4 -->
                   <tr>
-                    <td>4</td><td>(f5)</td><td>Target</td>
+                    <td>5</td><td>(f5)</td><td>Target</td>
+                  </tr>
+                 <tr>
+                   <td>6</td><td>(v)</td><td>Result/Victory gfx</td>
                   </tr> 
+                 <tr>
+                   <td>7</td><td>( j )</td><td>Bat Profile</td>
+                  </tr>
+                 <tr>
+                   <td>8</td><td>( k )</td><td>Ball Profile</td>
+                  </tr>  
                   <!-- Row 5 -->
                  <!--  <tr>
                     <td>5</td><td>(n)</td><td>Opener name</td>
@@ -168,29 +180,27 @@
                     <td>7</td><td>(F2)</td><td>In At</td>
                   </tr>  -->
                    <!-- Row 8 -->  
-                 <tr>
+                <!--  <tr>
                     <td>5</td><td>(F1)</td><td>CRR & RRR for inning 2</td>
                   </tr> 
-                  <!-- Row 9 -->  
+                  Row 9  
                  <tr>
                     <td>6</td><td>(F3)</td><td>Boundaries</td>
-                  </tr> 
+                  </tr>  -->
                   <!-- Row 10 -->  
                  <tr>
                     <td>7</td><td>(t)</td><td>Toss</td>
                   </tr> 
                   <!-- Row 11-->  
-                 <tr>
+               <!--   <tr>
                    <td>8</td><td>(F7)</td><td>Next to bat</td>
-                  </tr> 
+                  </tr>  -->
                   <!-- Row 12-->  
-                 <tr>
-                   <td>9</td><td>(v)</td><td>Result/Victory gfx</td>
-                  </tr> 
+                 <!--  
                   <tr>
                    <td>10</td><td>(x)</td><td>Last x overs</td>
-                  </tr>  
-                 <tr>
+                  </tr>  --> 
+                 <!-- <tr>
                    <td>11</td><td>(y)</td><td>Last x Balls</td>
                   </tr> 
                    <tr>
@@ -198,7 +208,7 @@
                   </tr> 
                    <tr>
                    <td>13</td><td>( w )</td><td>Leaderboard Most Wickets</td>
-                  </tr>     
+                  </tr> -->     
                 </tbody>
               </table>
             </div>
