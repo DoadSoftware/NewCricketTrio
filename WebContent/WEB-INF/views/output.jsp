@@ -166,7 +166,28 @@
                   </tr>
                  <tr>
                    <td>8</td><td>( k )</td><td>Ball Profile</td>
+                  </tr> 
+                  <tr>
+                    <td>9</td><td>(F1)</td><td>CRR & RRR for inning 2</td>
+                  </tr>
+                  <tr>
+                    <td>10</td><td>(F3)</td><td>Boundaries</td>
+                  </tr>
+                  <tr>
+                    <td>11</td><td>(t)</td><td>Toss</td>
+                  </tr>
+               	  <tr>
+                    <td>12</td><td>(F6)</td><td>CRR for inning 1</td>
+                  </tr> 
+                  <tr>
+                    <td>13</td><td>(q)</td><td>Batter Figure</td>
                   </tr>  
+                   <tr>
+                    <td>14</td><td>(d)</td><td>Bowler Figure</td>
+                  </tr> 
+                 <tr>
+                    <td>15</td><td>(F2)</td><td>In At(Press 1 for first inning and 2 for second inning)</td>
+                  </tr>        
                   <!-- Row 5 -->
                  <!--  <tr>
                     <td>5</td><td>(n)</td><td>Opener name</td>
@@ -176,21 +197,13 @@
                     <td>6</td><td>(F8)</td><td>Profile</td>
                   </tr> -->
                   <!-- Row 6 -->  
-                 <!-- <tr>
-                    <td>7</td><td>(F2)</td><td>In At</td>
-                  </tr>  -->
+                 <!--   -->
                    <!-- Row 8 -->  
-                <!--  <tr>
-                    <td>5</td><td>(F1)</td><td>CRR & RRR for inning 2</td>
-                  </tr> 
+                <!-- 
                   Row 9  
-                 <tr>
-                    <td>6</td><td>(F3)</td><td>Boundaries</td>
-                  </tr>  -->
+                 -->
                   <!-- Row 10 -->  
-                 <tr>
-                    <td>7</td><td>(t)</td><td>Toss</td>
-                  </tr> 
+                
                   <!-- Row 11-->  
                <!--   <tr>
                    <td>8</td><td>(F7)</td><td>Next to bat</td>

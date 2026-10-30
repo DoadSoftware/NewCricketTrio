@@ -87,6 +87,7 @@ public class NPL extends Scene{
 	public Tournament tournament;
 	public Tournament tournament2;
 	public List<String> this_data_str = new ArrayList<String>();
+	public BattingCard battingCard;
 	
 	private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
 		    .connectTimeout(Duration.ofSeconds(5)).build();
@@ -296,7 +297,6 @@ public class NPL extends Scene{
 			break;
 			
 		case "POPULATE_GRAPHICS_EQUATION":
-			System.out.println("Comn insdie populate method");
 		    sendVizMSEEquationPage(valueToProcess.split(",")[0], match,ipAddress,showname);
 		    break;
 		case "POPULATE_GRAPHICS_BOUNDARIES":
@@ -338,6 +338,9 @@ public class NPL extends Scene{
 		case "POPULATE_GRAPHICS_REQUIREDRUNRATE":
 		    sendVizMSERunRatePage(valueToProcess.split(",")[0], match, cricketService, ipAddress, showname);
 		    break;	
+		case "POPULATE_GRAPHICS_CURRENTRUNRATE":
+		    sendVizMSECurrentRatePage(valueToProcess.split(",")[0], match, cricketService, ipAddress, showname);
+		    break;	 
 			
 		case "POPULATE_DOUBLEMATCHID":	
 			//System.out.println("Valuetoprocess " + valueToProcess);
@@ -350,19 +353,39 @@ public class NPL extends Scene{
 			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[2]);
 			break;	
 				
-		case "POPULATE_GRAPHICS_IN_AT":
-			inning = match.getMatch().getInning().stream().filter(inn -> inn.getInningNumber() == Integer.valueOf(valueToProcess.split(",")[3]))
-			.findAny().orElse(null);
-			player = CricketFunctions.getPlayerFromMatchData(Integer.valueOf(valueToProcess.split(",")[0]), match);
-			if(valueToProcess.split(",")[1].equalsIgnoreCase("AR")) {
-				DoadWriteToTrio(print_writer, "read_template In_AT_02");
-			}else {
-				DoadWriteToTrio(print_writer, "read_template Profile_Drone");
-			}
+//		case "POPULATE_GRAPHICS_IN_AT":
+//			inning = match.getMatch().getInning().stream().filter(inn -> inn.getInningNumber() == Integer.valueOf(valueToProcess.split(",")[3]))
+//			.findAny().orElse(null);
+//			player = CricketFunctions.getPlayerFromMatchData(Integer.valueOf(valueToProcess.split(",")[0]), match);
+//			if(valueToProcess.split(",")[1].equalsIgnoreCase("AR")) {
+//				DoadWriteToTrio(print_writer, "read_template In_AT_02");
+//			}else {
+//				DoadWriteToTrio(print_writer, "read_template Profile_Drone");
+//			}
+//			
+//			populateInAT(print_writer, match,Integer.valueOf(valueToProcess.split(",")[3]),category);
+//			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[2]);
+//			break;
 			
-			populateInAT(print_writer, match,Integer.valueOf(valueToProcess.split(",")[3]),category);
-			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[2]);
+		case "POPULATE_GRAPHICS_IN_AT": {
+			String[] ia = valueToProcess.split(",");
+			if (ia.length < 4 || ia[0].equalsIgnoreCase("undefined") || ia[3].equalsIgnoreCase("undefined")) {
+				return "POPULATE_GRAPHICS_IN_AT: bad input [" + valueToProcess + "]";
+			}
+			int iaPlayerId = Integer.valueOf(ia[0].trim());
+			String iaPageName = ia[2];
+			int iaInningNo = Integer.valueOf(ia[3].trim());
+
+			Inning iaInning = match.getMatch().getInning().stream()
+					.filter(inn -> inn.getInningNumber() == iaInningNo)
+					.findAny().orElse(null);
+			if (iaInning == null || iaInning.getBattingCard() == null) {
+				return "POPULATE_GRAPHICS_IN_AT: Inning " + iaInningNo + " not found";
+			}
+
+			sendVizMSEInAtPage(iaPageName, match, iaInning, iaPlayerId, ipAddress, showname);
 			break;
+		}	
 		case "POPULATE_GRAPHICS_BATPROFILE":
 			 whichprofile =valueToProcess.split(",")[1].toUpperCase();
 				inning = match.getMatch().getInning().stream().filter(inn -> inn.getInningNumber() == Integer.valueOf(valueToProcess.split(",")[4]))
@@ -574,6 +597,61 @@ public class NPL extends Scene{
 					valueToProcess.split(",")[2],                       // AR / drone graphic type
 					ipAddress, showname);
 			break;
+			
+		case "POPULATE_GRAPHICS_BATFIGURE": 
+			String[] bf = valueToProcess.split(",");
+			int bfPlayerId = Integer.valueOf(bf[0]);
+			String bfGraphicType = bf[1];
+			String bfPageName = bf[2];
+			int bfInningNo = Integer.valueOf(bf[3]);
+
+			inning = match.getMatch().getInning().stream()
+					.filter(inn -> inn.getInningNumber() == bfInningNo)
+					.findAny().orElse(null);
+			if (inning == null) {
+				return "POPULATE_GRAPHICS_BATFIGURE: Inning " + bfInningNo + " not found";
+			}
+
+			battingCard = inning.getBattingCard().stream()
+					.filter(bc -> bc.getPlayerId() == bfPlayerId)
+					.findAny().orElse(null);
+			if (battingCard == null) {
+				return "POPULATE_GRAPHICS_BATFIGURE: Player " + bfPlayerId + " not in inning " + bfInningNo;
+			}
+
+			sendVizMSEBatFIGURE(bfPageName, match, bfInningNo, bfGraphicType, ipAddress, showname, battingCard);
+			break;
+		case "POPULATE_GRAPHICS_BALLFIGURE":
+			System.out.println("coming inside");
+			System.out.println("valuetoprocess" + valueToProcess);
+			String[] bw = valueToProcess.split(",");
+			if (bw.length < 4 || bw[0].equalsIgnoreCase("undefined") || bw[1].equalsIgnoreCase("undefined")) {
+				return "POPULATE_GRAPHICS_BALLFIGURE: bad input [" + valueToProcess + "]";
+			}
+			int bwPlayerId = Integer.valueOf(bw[0].trim());
+			String bwGraphicType = bw[1];
+			String bwPageName = bw[2];
+			int bwInningNo = Integer.valueOf(bw[3].trim());
+
+			Inning bwInning = match.getMatch().getInning().stream()
+					.filter(inn -> inn.getInningNumber() == bwInningNo)
+					.findAny().orElse(null);
+
+			BowlingCard bowlingCard = null;
+			if (bwInning != null && bwInning.getBowlingCard() != null) {
+				bowlingCard = bwInning.getBowlingCard().stream()
+						.filter(boc -> boc.getPlayerId() == bwPlayerId)
+						.findAny().orElse(null);
+			}
+			if (bowlingCard == null) {
+				return "POPULATE_GRAPHICS_BALLFIGURE: Player " + bwPlayerId + " has no bowling card in inning " + bwInningNo;
+			}
+
+			sendVizMSEBallFigure(bwPageName, match, bwGraphicType, ipAddress, showname, bowlingCard);
+			break;
+		
+		
+		
 			
 		case "POPULATE_GRAPHICS_OPENERBATPROFILE":
 		    player = CricketFunctions.getPlayerFromMatchData(Integer.valueOf(valueToProcess.split(",")[0]), match);
@@ -992,7 +1070,7 @@ public class NPL extends Scene{
 			DoadWriteToTrio(print_writer, "saveas " + valueToProcess.split(",")[3]);
 			break;	
 			
-case "POPULATE_GRAPHICS_AUCTIONBALLPROFILE":
+		case "POPULATE_GRAPHICS_AUCTIONBALLPROFILE":
 			
 			debut3 = "NO";
 			for(Player ply: cricketService.getAllPlayer()) {
@@ -2152,6 +2230,99 @@ case "POPULATE_GRAPHICS_AUCTIONBALLPROFILE":
 		
 		putMethod(putUrl, payloadXml);
 	}
+		private void sendVizMSEInAtPage(String pageName, MatchAllData match, Inning inn,
+				int playerId, String ipAddress, String showName) {
+
+			// Template key: must be the exact master template name of the IN AT graphic
+			String[] urls = getShowIdAndURL(pageName, match, ipAddress, "IN_AT", showName);
+			String modelUrl = urls[0];
+			String putUrl = urls[1];
+
+			// Find the batter and his position (same logic as the old rowId)
+			BattingCard found = null;
+			int position = 0;
+			for (BattingCard bc : inn.getBattingCard()) {
+				position++;
+				if (bc.getPlayerId() == playerId) {
+					found = bc;
+					break;
+				}
+			}
+			if (found == null) {
+				System.out.println("sendVizMSEInAtPage: player " + playerId + " not in batting card");
+				return;
+			}
+
+			Player p = found.getPlayer();
+			String teamBadge = inn.getBatting_team().getTeamBadge();
+			int wicket= inn.getTotalWickets();
+			String total_wick = String.valueOf(wicket+2);
+			String image = (p.getPhoto() == null || p.getPhoto().trim().isEmpty()) ? ""
+					: "C:\\Images\\NPL\\Photos\\" + teamBadge + "\\" + p.getPhoto() + CricketUtil.PNG_EXTENSION;
+
+			StringBuilder payloadXml = new StringBuilder();
+			payloadXml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+					.append("<payload xmlns=\"http://www.vizrt.com/types\"\n")
+					.append("         model=\"").append(modelUrl).append("\">\n");
+
+			// Field names are the old Trio names; confirm them in the template
+			addField(payloadXml, "006-PlayerNAME", p.getTicker_name());
+			addField(payloadXml, "005-PLAYER_IMAGE", image);
+			addField(payloadXml, "002-AT_Number", total_wick);
+			addField(payloadXml, "000-TEAMNAME", teamBadge);
+			addField(payloadXml, "003-IN_AT", "IN AT");
+			
+
+			payloadXml.append("</payload>");
+
+			putMethod(putUrl, payloadXml.toString());
+		}
+		
+		private void sendVizMSECurrentRatePage(String pageName,MatchAllData match,CricketService cricketService, String ipAddress,String showName) {
+			
+			String[] urls = getShowIdAndURL(pageName,match,ipAddress,"TOSS",showName);
+			
+			String modelUrl = urls[0];
+			String putUrl = urls[1];
+			
+			String currentRunRate = "";
+			String requiredRunRate = "";
+			
+			for (Inning inn : match.getMatch().getInning()) {
+			
+			if (CricketUtil.YES.equalsIgnoreCase(inn.getIsCurrentInning())) {
+			
+			currentRunRate = String.valueOf(inn.getRunRate());
+			
+			requiredRunRate = CricketFunctions.generateRunRate(
+			CricketFunctions.GetTargetData(match).getRemaningRuns(),
+			0,
+			CricketFunctions.GetTargetData(match).getRemaningBall(),
+			2,
+			match);
+			
+			break;
+			}
+			}
+			
+			String payloadXml =
+					"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+					+ "<payload xmlns=\"http://www.vizrt.com/types\"\n"
+					+ "         model=\"" + modelUrl + "\">\n"
+					
+					+ "  <field name=\"002-TEAM_REF-NAME\">"
+					+ "<value>"+ match.getMatch().getInning().get(0).getBatting_team().getTeamBadge() + "</value></field>\n"
+					
+					+ "  <field name=\"100-LINE\">"
+					+ "<value>CURRENT RUNRATE</value></field>\n"
+					
+					+ "  <field name=\"101-LINE\">"
+					+ "<value>" + currentRunRate + "</value></field>\n"
+					
+					+ "</payload>";
+			
+			putMethod(putUrl, payloadXml);
+		}
  	
  	private void populatePARTNERSHIP(PrintWriter print_writer,MatchAllData match,CricketService cricketService) {
  		
@@ -2228,48 +2399,7 @@ case "POPULATE_GRAPHICS_AUCTIONBALLPROFILE":
 // 			}
 // 		}
 // 	}
- 	private void sendVizMSERunRatePage(String pageName,MatchAllData match,CricketService cricketService, String ipAddress,String showName) {
-		
-		String[] urls = getShowIdAndURL(pageName,match,ipAddress,"RunsAndBall",showName);
-		
-		String modelUrl = urls[0];
-		String putUrl = urls[1];
-		
-		String currentRunRate = "";
-		String requiredRunRate = "";
-		
-		for (Inning inn : match.getMatch().getInning()) {
-		
-		if (CricketUtil.YES.equalsIgnoreCase(inn.getIsCurrentInning())) {
-		
-		currentRunRate = String.valueOf(inn.getRunRate());
-		
-		requiredRunRate = CricketFunctions.generateRunRate(
-		CricketFunctions.GetTargetData(match).getRemaningRuns(),
-		0,
-		CricketFunctions.GetTargetData(match).getRemaningBall(),
-		2,
-		match);
-		
-		break;
-		}
-		}
-		
-		String payloadXml =
-		"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-		+ "<payload xmlns=\"http://www.vizrt.com/types\"\n"
-		+ "         model=\"" + modelUrl + "\">\n"
-		
-		+ "  <field name=\"003-Header\"><value>RUN RATES</value></field>\n"
-		+ "  <field name=\"100-HEADER\"><value>CURRENT</value></field>\n"
-		+ "  <field name=\"101-RUNS\"><value>" + currentRunRate + "</value></field>\n"
-		+ "  <field name=\"102-HEADER\"><value>REQUIRED</value></field>\n"
-		+ "  <field name=\"103-BALLS\"><value>" + requiredRunRate + "</value></field>\n"
-		
-		+ "</payload>";
-		
-		putMethod(putUrl, payloadXml);
-	}
+ 	
  	
 // 	private void populateLastxovers(PrintWriter print_writer,MatchAllData match,int overnumber,String cat) {
 // 		System.out.println("coming insde");
@@ -4029,38 +4159,7 @@ case "POPULATE_GRAPHICS_AUCTIONBALLPROFILE":
 		return name + "," + runs + "," + wicket;
 		
 	}
-	private void sendVizMSEBoundaryPage(String pageName, MatchAllData match, int inningNumber,String ipAddress,String showName) {
-
-		 String[] urls = getShowIdAndURL(pageName,match,ipAddress,"RunsAndBall",showName);
-
-		    String modelUrl = urls[0];
-		    String putUrl   = urls[1];       
-
-	    String totalFours = "0";
-	    String totalSixes = "0";
-	    String fourHeader = "";
-	    
-	    for (Inning inn : match.getMatch().getInning()) {
-	        if (inn.getInningNumber() == inningNumber) {
-	            totalFours = String.valueOf(inn.getTotalFours());
-	            totalSixes = String.valueOf(inn.getTotalSixes());
-	           fourHeader = "FOUR" + CricketFunctions.Plural(inn.getTotalFours()).toUpperCase();
-	        }
-	    }
-
-	    String payloadXml =
-	          "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-	        + "<payload xmlns=\"http://www.vizrt.com/types\"\n"
-	        + "         model=\"" + modelUrl + "\">\n"
-	        + "  <field name=\"003-Header\"><value>BOUNDARIES</value></field>\n"
-	        + "  <field name=\"100-HEADER\"><value>" + fourHeader + "</value></field>\n"
-	        + "  <field name=\"101-RUNS\"><value>"   + totalFours + "</value></field>\n"
-	        + "  <field name=\"102-HEADER\"><value>SIXES</value></field>\n"
-	        + "  <field name=\"103-BALLS\"><value>"  + totalSixes + "</value></field>\n"
-	        + "</payload>";
-
-	    putMethod(putUrl,payloadXml);
-	}
+	
 	
 
 
@@ -4159,6 +4258,94 @@ case "POPULATE_GRAPHICS_AUCTIONBALLPROFILE":
 		    System.out.println("===============");
 
 	     putMethod(putUrl,payloadXml);
+	}
+	
+	
+	
+	private void sendVizMSERunRatePage(String pageName,MatchAllData match,CricketService cricketService, String ipAddress,String showName) {
+		
+		String[] urls = getShowIdAndURL(pageName,match,ipAddress,"RunsAndBalls",showName);
+		
+		String modelUrl = urls[0];
+		String putUrl = urls[1];
+		
+		String currentRunRate = "";
+		String requiredRunRate = "";
+		
+		for (Inning inn : match.getMatch().getInning()) {
+		
+		if (CricketUtil.YES.equalsIgnoreCase(inn.getIsCurrentInning())) {
+		
+		currentRunRate = String.valueOf(inn.getRunRate());
+		
+		requiredRunRate = CricketFunctions.generateRunRate(
+		CricketFunctions.GetTargetData(match).getRemaningRuns(),
+		0,
+		CricketFunctions.GetTargetData(match).getRemaningBall(),
+		2,
+		match);
+		
+		break;
+		}
+		}
+		
+		String payloadXml =
+		"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		+ "<payload xmlns=\"http://www.vizrt.com/types\"\n"
+		+ "         model=\"" + modelUrl + "\">\n"
+		 + "  <field name=\"001-TEAMNAME\"><value>"+ match.getMatch().getInning().get(1).getBatting_team().getTeamBadge() +"</value></field>\n"
+	        
+		+ "  <field name=\"005-BottomInfo\"><value>RUN RATES</value></field>\n"
+		+ "  <field name=\"100-HEADER\"><value>CURRENT</value></field>\n"
+		+ "  <field name=\"102-Bottom\"><value>"+"" +"</value></field>\n"
+		+ "  <field name=\"101-RUNS\"><value>" + currentRunRate + "</value></field>\n"
+		+ "  <field name=\"103-HEADER\"><value>REQUIRED</value></field>\n"
+		+ "  <field name=\"104-BALLS\"><value>" + requiredRunRate + "</value></field>\n"
+		+ "  <field name=\"105-BALLS\"><value>" + "" + "</value></field>\n"
+		
+		+ "</payload>";
+		
+		putMethod(putUrl, payloadXml);
+	}
+	
+	private void sendVizMSEBoundaryPage(String pageName, MatchAllData match, int inningNumber,String ipAddress,String showName) {
+
+		 String[] urls = getShowIdAndURL(pageName,match,ipAddress,"RunsAndBalls",showName);
+
+		    String modelUrl = urls[0];
+		    String putUrl   = urls[1];       
+
+	    String totalFours = "0";
+	    String totalSixes = "0";
+	    String fourHeader = "";
+	    String teamName = "";
+	    
+	    for (Inning inn : match.getMatch().getInning()) {
+	        if (inn.getInningNumber() == inningNumber) {
+	            totalFours = String.valueOf(inn.getTotalFours());
+	            totalSixes = String.valueOf(inn.getTotalSixes());
+	           fourHeader = "FOUR" + CricketFunctions.Plural(inn.getTotalFours()).toUpperCase();
+	           teamName = inn.getBatting_team().getTeamBadge();
+	           
+	        }
+	    }
+
+	    String payloadXml =
+	          "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+	        + "<payload xmlns=\"http://www.vizrt.com/types\"\n"
+	        + "         model=\"" + modelUrl + "\">\n"
+	          + "  <field name=\"001-TEAMNAME\"><value>" + teamName + "</value></field>\n"
+	          + "  <field name=\"005-BottomInfo\"><value>BOUNDARIES</value></field>\n"
+	          + "  <field name=\"100-HEADER\"><value>" + fourHeader + "</value></field>\n"
+	          + "  <field name=\"101-RUNS\"><value>"   + totalFours + "</value></field>\n"
+	          + "  <field name=\"102-Bottom\"><value>"+"" +"</value></field>\n"
+	       
+	        + "  <field name=\"103-HEADER\"><value>SIXES</value></field>\n"
+	        + "  <field name=\"104-BALLS\"><value>"  + totalSixes + "</value></field>\n"
+	        + "  <field name=\"105-BALLS\"><value>" + "" + "</value></field>\n"
+	        + "</payload>";
+
+	    putMethod(putUrl,payloadXml);
 	}
 	private String getShowGuid(String showName,String ipAddress) {
 
@@ -4531,6 +4718,103 @@ case "POPULATE_GRAPHICS_AUCTIONBALLPROFILE":
 	        e.printStackTrace();
 	    }
 	}
+	private void sendVizMSEBallFigure(String pageName, MatchAllData match, String graphicType,
+			String ipAddress, String showName, BowlingCard boc) {
+
+		// SAME template key as sendVizMSEBatFIGURE
+		String[] urls = getShowIdAndURL(pageName, match, ipAddress, "Player_Figures", showName);
+		String modelUrl = urls[0];
+		String putUrl = urls[1];
+
+		Player player = boc.getPlayer();
+
+		Team team = null;
+		if (match.getSetup().getHomeTeamId() == player.getTeamId()) {
+			team = match.getSetup().getHomeTeam();
+		} else if (match.getSetup().getAwayTeamId() == player.getTeamId()) {
+			team = match.getSetup().getAwayTeam();
+		}
+		String teamBadge = (team == null || team.getTeamBadge() == null) ? "" : team.getTeamBadge();
+
+		String playerName = player.getFull_name() == null ? "" : player.getFull_name().toUpperCase();
+
+		String figures = boc.getWickets() + "-" + boc.getRuns();
+
+		String overs = CricketFunctions.OverBalls(boc.getOvers(), boc.getBalls()) + " OVERS";
+
+		String economy = (boc.getEconomyRate() == null || boc.getEconomyRate().equalsIgnoreCase("0.00"))
+				? "-" : boc.getEconomyRate() + " ECON";
+
+		String image = (player.getPhoto() == null || player.getPhoto().trim().isEmpty()) ? ""
+				: "C:\\Images\\NPL\\Photos\\" + teamBadge + "\\" + player.getPhoto() + CricketUtil.PNG_EXTENSION;
+
+		StringBuilder payloadXml = new StringBuilder();
+		payloadXml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+				.append("<payload xmlns=\"http://www.vizrt.com/types\"\n")
+				.append("         model=\"").append(modelUrl).append("\">\n");
+
+		addField(payloadXml, "000-TEAMNAME", teamBadge);
+		addField(payloadXml, "002-PLAYER-RUN", figures);
+		addField(payloadXml, "003-PLAYER-BALLS", overs);
+		addField(payloadXml, "004-PLAYER-BALLS-TEXT", economy);
+		addField(payloadXml, "005-PLAYER_IMAGE", image);
+		addField(payloadXml, "006-PlayerNAME", playerName);
+
+		payloadXml.append("</payload>");
+
+		putMethod(putUrl, payloadXml.toString());
+	}
+	
+	private void sendVizMSEBatFIGURE(String pageName, MatchAllData match, int inningNo,
+			String graphicType, String ipAddress, String showName, BattingCard bc) {
+
+		String[] urls = getShowIdAndURL(pageName, match, ipAddress, "Player_Figures", showName);
+		String modelUrl = urls[0];
+		String putUrl = urls[1];
+		
+		Player player = bc.getPlayer();
+
+		Team team = null;
+		if (match.getSetup().getHomeTeamId() == player.getTeamId()) {
+			team = match.getSetup().getHomeTeam();
+		} else if (match.getSetup().getAwayTeamId() == player.getTeamId()) {
+			team = match.getSetup().getAwayTeam();
+		}
+		String teamBadge = (team == null || team.getTeamBadge() == null) ? "" : team.getTeamBadge();
+
+		String playerName = player.getFull_name() == null ? "" : player.getFull_name().toUpperCase();
+
+		
+		String runs = bc.getRuns() + (CricketUtil.NOT_OUT.equalsIgnoreCase(bc.getStatus()) ? "*" : "");
+
+		String balls = bc.getBalls() + " BALLS";
+
+		String strikeRate = "-";
+		if (bc.getStrikeRate() != null && !bc.getStrikeRate().trim().isEmpty()) {
+			strikeRate = CricketFunctions.generateStrikeRate(bc.getRuns(), bc.getBalls(), 0) + " S/R";
+		}
+
+	
+		String image = (player.getPhoto() == null || player.getPhoto().trim().isEmpty()) ? ""
+				: "C:\\Images\\NPL\\Photos\\" + teamBadge + "\\" + player.getPhoto() + CricketUtil.PNG_EXTENSION;
+
+		StringBuilder payloadXml = new StringBuilder();
+		payloadXml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+				.append("<payload xmlns=\"http://www.vizrt.com/types\"\n")
+				.append("         model=\"").append(modelUrl).append("\">\n");
+
+		addField(payloadXml, "000-TEAMNAME", teamBadge);
+		addField(payloadXml, "002-PLAYER-RUN", runs);
+		addField(payloadXml, "003-PLAYER-BALLS", balls);
+		addField(payloadXml, "004-PLAYER-BALLS-TEXT", strikeRate);
+		addField(payloadXml, "005-PLAYER_IMAGE", image);
+		addField(payloadXml, "006-PlayerNAME", playerName);
+
+		payloadXml.append("</payload>");
+
+		putMethod(putUrl, payloadXml.toString());
+	}
+	
 	private void sendVizMSEAuctionBatProfilePage(String pageName, MatchAllData match, int inn,
 			String graphicType, String ipAddress, String showName) {
 	 
